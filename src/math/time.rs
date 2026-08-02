@@ -1,15 +1,22 @@
+//! A strongly typed duration measured in years.
+
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign};
 
+/// A duration measured in years.
+///
+/// The inner floating-point value is private so callers cannot accidentally
+/// mix an unlabelled scalar into a time calculation without making the unit
+/// conversion explicit.
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Default)]
-
-/// Time in years
 pub struct Time(f64);
 
 impl Time {
+    /// Constructs a duration from a number of years.
     pub fn years(value: f64) -> Self {
         Self(value)
     }
 
+    /// Returns this duration as a floating-point number of years.
     pub fn as_years(self) -> f64 {
         self.0
     }

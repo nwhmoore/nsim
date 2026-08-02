@@ -1,3 +1,5 @@
+//! Physical quantities and gravitational calculations used by the simulation.
+
 use crate::{
     body::{LargeBody, Positioned},
     math::time::Time,
@@ -11,14 +13,19 @@ pub mod time;
 
 /// Newton's gravitational constant
 ///
-/// Expressed in units characteristic of Earth's orbit. AU.pow(3) * YEAR.pow(-2) * (M_sol + M_earth + M_luna).pow(-1)
+/// Expressed in the simulation's unit system as AU³ / (solar mass · year²).
+/// Its value, `4π²`, makes a one-solar-mass circular orbit with a semi-major
+/// axis of one AU have a period of one year.
 pub const GRAVITY: f64 = 4.0 * PI * PI;
 
-/// Position of an object in units of AU.
+/// A three-dimensional position measured in astronomical units (AU).
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub struct Position {
+    /// X coordinate in AU.
     pub x: f64,
+    /// Y coordinate in AU.
     pub y: f64,
+    /// Z coordinate in AU.
     pub z: f64,
 }
 
@@ -43,19 +50,23 @@ impl Sub for Position {
 }
 
 impl Position {
+    /// Returns the squared Euclidean magnitude of this position vector.
+    ///
+    /// This avoids a square root and is useful when only distances need to be
+    /// compared or when calculating inverse-cube gravitational factors.
     pub fn magnitude_squared(self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 }
 
-/// Velocity of an object in units of AU/YEAR
+/// A three-dimensional velocity measured in AU/year.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Velocity {
-    /// X component of velocity
+    /// X component in AU/year.
     pub u: f64,
-    /// Y component of velocity
+    /// Y component in AU/year.
     pub v: f64,
-    /// Z component of velocity
+    /// Z component in AU/year.
     pub w: f64,
 }
 
@@ -79,14 +90,14 @@ impl Mul<Time> for Velocity {
     }
 }
 
-/// Acceleration of an object in units of AU/YEAR/YEAR
+/// A three-dimensional acceleration measured in AU/year².
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Acceleration {
-    /// X component of acceleration
+    /// X component in AU/year².
     pub r: f64,
-    /// Y component of acceleration
+    /// Y component in AU/year².
     pub s: f64,
-    /// Z component of acceleration
+    /// Z component in AU/year².
     pub t: f64,
 }
 
@@ -126,7 +137,17 @@ impl Mul<Time> for Acceleration {
 //     mean_anom: f64,
 // }
 
-/// Acceleration due to gravity from one [`LargeBody`]
+/// Calculates the acceleration caused by one [`LargeBody`].
+///
+/// The acceleration points from `body` toward `large` and has magnitude
+/// `GRAVITY * large.mass / distance³`. The source and target must not occupy
+/// the same position because the inverse-cube factor is singular there.
+///
+/// This function is generic over any type implementing [`Positioned`], which
+/// allows it to operate on either a [`SmallBody`] or a
+/// [`LargeBody`].
+///
+/// [`SmallBody`]: crate::body::SmallBody
 pub fn gravity_acceleration<B>(body: &B, large: &LargeBody) -> Acceleration
 where
     B: Positioned,
@@ -135,8 +156,7 @@ where
 
     let r_vec = *body.position() - *large.position();
     let r_squared = r_vec.magnitude_squared();
-    let accel_prefac =
-        -GRAVITY * large.mass / (r_squared * r_squared.sqrt());
+    let accel_prefac = -GRAVITY * large.mass / (r_squared * r_squared.sqrt());
 
     Acceleration {
         r: r_vec.x * accel_prefac,
