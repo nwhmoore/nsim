@@ -1,3 +1,6 @@
+//! Command-line entry point for the N-body simulation.
+#![warn(missing_docs)]
+
 use std::f64::consts::PI;
 
 use crate::{
@@ -12,7 +15,9 @@ mod integration;
 mod output;
 mod particle;
 
-// currently in units of AU^3 yr^-2 M_sol^-1
+/// Gravitational constant in AU³ · year⁻² · solar-mass⁻¹.
+///
+/// The units of this constant set the units of the entire simulation.
 const GRAVITY: f64 = 4.0 * PI * PI;
 
 fn main() -> std::io::Result<()> {
@@ -25,7 +30,7 @@ fn main() -> std::io::Result<()> {
     // 1% of period
     let time_step = time_end * 0.01;
 
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::new_system();
 
     system.new_particle(Particle {
         name: String::from("Sol"),

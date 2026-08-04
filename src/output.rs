@@ -34,6 +34,14 @@ fn particle_name(system: &ParticleSystem, particle_index: usize) -> io::Result<&
 /// The file is written to `output/<particle-name>.out`. The output directory
 /// is created automatically when it does not already exist. The first line is
 /// the particle name and the second line contains the column headings.
+///
+/// `particle_index` must refer to an entry in the particle catalog.
+/// Existing files with the same particle name are truncated.
+///
+/// # Errors
+///
+/// Returns an I/O error if the directory or file cannot be created, or if the
+/// particle index is invalid.
 pub fn create_particle_file(system: &ParticleSystem, particle_index: usize) -> io::Result<()> {
     let name = particle_name(system, particle_index)?;
     fs::create_dir_all(OUTPUT_DIRECTORY)?;
@@ -50,6 +58,15 @@ pub fn create_particle_file(system: &ParticleSystem, particle_index: usize) -> i
 /// Position values are written as `x`, `y`, and `z`; velocity values are
 /// written as `u`, `v`, and `w`. Values use scientific notation with enough
 /// precision to preserve typical `f64` results when read back.
+///
+/// `particle_index` must refer to an entry whose position and velocity arrays
+/// contain matching entries. The file must have been initialized with
+/// [`create_particle_file`] first.
+///
+/// # Errors
+///
+/// Returns an I/O error if the particle index or state data is invalid, if the
+/// file does not exist, or if the append fails.
 pub fn append_particle_timestep(
     system: &ParticleSystem,
     particle_index: usize,

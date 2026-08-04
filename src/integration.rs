@@ -11,12 +11,17 @@ use crate::{force::ForceBuffer, particle::ParticleState};
 /// 3. Advance positions by one full timestep using the half-step velocities.
 /// 4. Recompute accelerations at the new positions.
 /// 5. Advance velocities by the remaining half timestep.
+///
+/// The state and force-buffer vectors must have
+/// matching lengths and the force buffer is reused in place.
 pub fn leapfrog_timestep(state: &mut ParticleState, force_buffer: &mut ForceBuffer, dt: f64) {
     force_buffer.update_accelerations(state);
 
-    // half-step velocity v_(t+.5dt) = v_t + .5 * a_t * dt
-
     for particle_index in 0..state.mass.len() {
+        if !state.alive[particle_index] {
+            continue;
+        }
+
         state.vx[particle_index] += force_buffer.ax[particle_index] * 0.5 * dt;
         state.x[particle_index] += state.vx[particle_index] * dt;
 
@@ -27,11 +32,13 @@ pub fn leapfrog_timestep(state: &mut ParticleState, force_buffer: &mut ForceBuff
         state.z[particle_index] += state.vz[particle_index] * dt;
     }
 
-    // recompute accelerations at current positions
     force_buffer.update_accelerations(state);
 
-    // finish velocity update
     for particle_index in 0..state.mass.len() {
+        if !state.alive[particle_index] {
+            continue;
+        }
+
         state.vx[particle_index] += force_buffer.ax[particle_index] * 0.5 * dt;
         state.vy[particle_index] += force_buffer.ay[particle_index] * 0.5 * dt;
         state.vz[particle_index] += force_buffer.az[particle_index] * 0.5 * dt;

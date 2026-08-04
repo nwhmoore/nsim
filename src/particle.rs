@@ -1,20 +1,27 @@
 //! Particles in the simulation.
 
-/// All particles in the system
+/// Collection of particles stored as catalog metadata and simulation state.
+///
+/// The catalog and state use a structure-of-arrays layout. Their vectors must
+/// remain aligned: a particle at index `i` has its name and metadata in the
+/// catalog's index `i` and its position, velocity, and mass in the state's
+/// index `i`.
 pub struct ParticleSystem {
+    /// Stable catalog metadata for every particle.
     pub catalog: ParticleCatalog,
+    /// Mutable numerical state used by the integrator.
     pub state: ParticleState,
     next_particle_id: usize,
 }
 
 impl ParticleSystem {
-    pub fn new() -> Self {
+    /// Creates an empty particle system.
+    pub fn new_system() -> Self {
         ParticleSystem {
             catalog: ParticleCatalog {
                 id: Vec::new(),
                 name: Vec::new(),
                 radius: Vec::new(),
-                alive: Vec::new(),
             },
             state: ParticleState {
                 mass: Vec::new(),
@@ -24,18 +31,22 @@ impl ParticleSystem {
                 vx: Vec::new(),
                 vy: Vec::new(),
                 vz: Vec::new(),
+                alive: Vec::new(),
             },
             next_particle_id: 0,
         }
     }
 
+    /// Adds a particle and assigns it the next available catalog ID.
+    ///
+    /// The particle's metadata and state are appended at the same index in
+    /// their respective arrays.
     pub fn new_particle(&mut self, particle: Particle) {
         self.catalog.id.push(self.next_particle_id);
         self.next_particle_id += 1;
 
         self.catalog.name.push(particle.name);
         self.catalog.radius.push(particle.radius);
-        self.catalog.alive.push(true);
 
         self.state.mass.push(particle.mass);
 
@@ -46,45 +57,58 @@ impl ParticleSystem {
         self.state.vx.push(particle.vel.0);
         self.state.vy.push(particle.vel.1);
         self.state.vz.push(particle.vel.2);
+
+        self.state.alive.push(true);
     }
 }
 
+/// Persistent metadata associated with each particle.
+///
+/// Every vector is indexed by the same particle index.
 pub struct ParticleCatalog {
-    // ID number
+    /// Stable numeric ID assigned when the particle is added.
     pub id: Vec<usize>,
-    // Particle name
+    /// Particle names, also used as output filename stems.
     pub name: Vec<String>,
-    // Particle radius.
+    /// Particle radii in the simulation's distance unit (AU).
     pub radius: Vec<f64>,
-    // Particle status
-    alive: Vec<bool>,
 }
 
+/// Time-varying numerical state stored for all particles.
+///
+/// A mass of `None` marks a massless test particle.
 pub struct ParticleState {
-    // Particle masses. Particles with mass `None` are massless test particles.
+    /// Particle masses; `None` denotes a massless test particle.
     pub mass: Vec<Option<f64>>,
 
-    // Positions
+    /// X coordinates.
     pub x: Vec<f64>,
+    /// Y coordinates.
     pub y: Vec<f64>,
+    /// Z coordinates.
     pub z: Vec<f64>,
 
-    // Velocities
+    /// X velocity components.
     pub vx: Vec<f64>,
+    /// Y velocity components.
     pub vy: Vec<f64>,
+    /// Z velocity components.
     pub vz: Vec<f64>,
+
+    /// Whether each particle is active in the system.
+    pub alive: Vec<bool>,
 }
 
-/// Individual particle
+/// Initial metadata and state used to add one particle to a [`ParticleSystem`].
 pub struct Particle {
     /// Name of the particle, also used as the output filename stem.
     pub name: String,
-    /// Radius of particle
+    /// Radius of the particle.
     pub radius: f64,
-    /// Position
+    /// Initial position `(x, y, z)`.
     pub pos: (f64, f64, f64),
-    /// Velocity
+    /// Initial velocity `(u, v, w)`.
     pub vel: (f64, f64, f64),
-    /// Mass
+    /// Mass, or `None` for a massless test particle.
     pub mass: Option<f64>,
 }
