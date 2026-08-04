@@ -1,9 +1,9 @@
 use crate::{GRAVITY, particle::ParticleState};
 
 pub struct ForceBuffer {
-    ax: Vec<f64>,
-    ay: Vec<f64>,
-    az: Vec<f64>,
+    pub ax: Vec<f64>,
+    pub ay: Vec<f64>,
+    pub az: Vec<f64>,
 }
 
 impl ForceBuffer {
