@@ -1,8 +1,8 @@
 //! Fixed-timestep leapfrog/velocity-Verlet integration.
 
 use crate::{
-    body::{LargeBody, Positioned, SmallBody},
-    math::{Acceleration, gravity_acceleration, time::Time},
+    math::{Acceleration, Position, gravity_acceleration, time::Time},
+    particle::{LargeParticle, SmallParticle},
 };
 
 /// Advances all bodies by one timestep using kick-drift-kick integration.
@@ -19,8 +19,8 @@ use crate::{
 /// have the same length as `large_bodies`; it stores large-body accelerations
 /// while the source positions are still being read.
 pub fn leapfrog_timestep(
-    small_bodies: &mut [SmallBody],
-    large_bodies: &mut [LargeBody],
+    small_bodies: &mut [SmallParticle],
+    large_bodies: &mut [LargeParticle],
     large_acceleration_scratch: &mut [Acceleration],
     time_step: Time,
 ) {
@@ -70,14 +70,14 @@ pub fn leapfrog_timestep(
 /// receive acceleration from every other large body, with self-interaction
 /// excluded. The scratch buffer must have one entry per large body.
 pub fn update_accelerations(
-    small_bodies: &mut [SmallBody],
-    large_bodies: &mut [LargeBody],
+    small_bodies: &mut [SmallParticle],
+    large_bodies: &mut [LargeParticle],
     large_acceleration_scratch: &mut [Acceleration],
 ) {
     // compute accelerations at current positions
 
     for small_body in small_bodies.iter_mut() {
-        small_body.acc = update_this_acceleration(small_body, large_bodies);
+        small_body.acc = update_this_acceleration(&small_body.pos, large_bodies);
     }
 
     for (index, (next_acceleration, large_body)) in large_acceleration_scratch
@@ -89,7 +89,7 @@ pub fn update_accelerations(
 
         for (source_index, source_body) in large_bodies.iter().enumerate() {
             if source_index != index {
-                total += gravity_acceleration(large_body, source_body);
+                total += gravity_acceleration(&large_body.pos, &source_body.pos, source_body.mass);
             }
         }
 
@@ -107,10 +107,10 @@ pub fn update_accelerations(
 ///
 /// The target may be any type implementing [`Positioned`], including either
 /// `SmallBody` or `LargeBody`.
-pub fn update_this_acceleration<B>(body: &B, all_large: &[LargeBody]) -> Acceleration
-where
-    B: Positioned,
-{
+pub fn update_this_acceleration(
+    satellite_position: &Position,
+    all_large: &[LargeParticle],
+) -> Acceleration {
     let mut total = Acceleration {
         r: 0.0,
         s: 0.0,
@@ -118,7 +118,7 @@ where
     };
 
     for large in all_large {
-        total += gravity_acceleration(body, large);
+        total += gravity_acceleration(satellite_position, &large.pos, large.mass);
     }
 
     total

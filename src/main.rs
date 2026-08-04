@@ -1,73 +1,48 @@
 use std::f64::consts::PI;
 
 use crate::{
-    body::{LargeBody, SmallBody},
-    math::{Acceleration, GRAVITY, Position, Velocity, time::Time},
-    output::{append_body_timestep, create_body_file},
-    simulation::leapfrog_timestep,
+    integration::leapfrog_timestep,
+    particle::{Particle, ParticleSystem},
 };
 
-mod body;
-mod math;
-mod output;
-mod simulation;
+mod force;
+mod integration;
+mod particle;
+
+const GRAVITY: f64 = 4.0 * PI * PI;
 
 fn main() -> std::io::Result<()> {
     // ---------------  INITIAL PARAMETERS -------------------
 
     // years
-    let time_start = Time::years(0.0);
+    let time_start = 0.0;
     // years
-    let time_end = Time::years(2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt());
+    let time_end = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
     // 1% of period
     let time_step = time_end * 0.01;
 
-    let mut large_bodies = [LargeBody {
-        name: String::from("Sol"),
-        pos: Position {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        vel: Velocity {
-            u: 0.0,
-            v: 0.0,
-            w: 0.0,
-        },
-        acc: Acceleration::default(),
-        mass: 1.0,
-    }];
+    let system = ParticleSystem::new();
 
-    let mut small_bodies = [SmallBody {
+    system.new_particle(Particle {
+        name: String::from("Sol"),
+        radius: 1.0,
+        pos: (0.0, 0.0, 0.0),
+        vel: (0.0, 0.0, 0.0),
+        mass: Some(1.0),
+    });
+
+    system.new_particle(Particle {
         name: String::from("Jupiter"),
-        pos: Position {
-            x: 5.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        vel: Velocity {
-            u: 0.0,
-            v: f64::sqrt(GRAVITY / 5.0),
-            w: 0.0,
-        },
-        acc: Acceleration::default(),
-    }];
+        radius: 1.0,
+        pos: (5.0, 0.0, 0.0),
+        vel: (0.0, f64::sqrt(GRAVITY / 5.0), 0.0),
+        mass: None,
+    });
 
     // -----------------------------------------------------------
 
-    for body in &large_bodies {
-        create_body_file(body)?;
-        append_body_timestep(body, time_start)?;
-    }
-
-    for body in &small_bodies {
-        create_body_file(body)?;
-        append_body_timestep(body, time_start)?;
-    }
-
     // integrate based on leapfrog / velocity verlet
     let mut time = time_start;
-    let mut large_acceleration_scratch = vec![Acceleration::default(); large_bodies.len()];
 
     while time <= time_end {
         leapfrog_timestep(
