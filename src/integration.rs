@@ -29,7 +29,7 @@ pub fn leapfrog_timestep(state: &mut ParticleState, force_buffer: &mut ForceBuff
 
     // recompute accelerations at current positions
     force_buffer.update_accelerations(state);
-    
+
     // finish velocity update
     for particle_index in 0..state.mass.len() {
         state.vx[particle_index] += force_buffer.ax[particle_index] * 0.5 * dt;

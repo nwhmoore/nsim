@@ -3,11 +3,13 @@ use std::f64::consts::PI;
 use crate::{
     force::ForceBuffer,
     integration::leapfrog_timestep,
+    output::{append_particle_timestep, create_particle_file},
     particle::{Particle, ParticleSystem},
 };
 
 mod force;
 mod integration;
+mod output;
 mod particle;
 
 // currently in units of AU^3 yr^-2 M_sol^-1
@@ -43,6 +45,11 @@ fn main() -> std::io::Result<()> {
 
     // -----------------------------------------------------------
 
+    for particle_index in 0..system.catalog.name.len() {
+        create_particle_file(&system, particle_index)?;
+        append_particle_timestep(&system, particle_index, time_start)?;
+    }
+
     let mut time = time_start;
     let mut force_buffer = ForceBuffer::new(system.catalog.id.len());
 
@@ -50,6 +57,10 @@ fn main() -> std::io::Result<()> {
         leapfrog_timestep(&mut system.state, &mut force_buffer, time_step);
 
         time += time_step;
+
+        for particle_index in 0..system.catalog.name.len() {
+            append_particle_timestep(&system, particle_index, time)?;
+        }
     }
 
     Ok(())
