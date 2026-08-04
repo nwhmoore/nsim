@@ -2,15 +2,15 @@
 
 /// All particles in the system
 pub struct ParticleSystem {
-    catalog: ParticleCatalogue,
-    state: ParticleState,
+    pub catalog: ParticleCatalog,
+    pub state: ParticleState,
     next_particle_id: usize,
 }
 
 impl ParticleSystem {
     pub fn new() -> Self {
         ParticleSystem {
-            catalog: ParticleCatalogue {
+            catalog: ParticleCatalog {
                 id: Vec::new(),
                 name: Vec::new(),
                 radius: Vec::new(),
@@ -49,13 +49,13 @@ impl ParticleSystem {
     }
 }
 
-pub struct ParticleCatalogue {
+pub struct ParticleCatalog {
     // ID number
-    id: Vec<usize>,
+    pub id: Vec<usize>,
     // Particle name
-    name: Vec<String>,
+    pub name: Vec<String>,
     // Particle radius.
-    radius: Vec<f64>,
+    pub radius: Vec<f64>,
     // Particle status
     alive: Vec<bool>,
 }

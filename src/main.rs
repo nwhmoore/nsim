@@ -1,6 +1,7 @@
 use std::f64::consts::PI;
 
 use crate::{
+    force::ForceBuffer,
     integration::leapfrog_timestep,
     particle::{Particle, ParticleSystem},
 };
@@ -9,6 +10,7 @@ mod force;
 mod integration;
 mod particle;
 
+// currently in units of AU^3 yr^-2 M_sol^-1
 const GRAVITY: f64 = 4.0 * PI * PI;
 
 fn main() -> std::io::Result<()> {
@@ -21,7 +23,7 @@ fn main() -> std::io::Result<()> {
     // 1% of period
     let time_step = time_end * 0.01;
 
-    let system = ParticleSystem::new();
+    let mut system = ParticleSystem::new();
 
     system.new_particle(Particle {
         name: String::from("Sol"),
@@ -41,26 +43,13 @@ fn main() -> std::io::Result<()> {
 
     // -----------------------------------------------------------
 
-    // integrate based on leapfrog / velocity verlet
     let mut time = time_start;
+    let mut force_buffer = ForceBuffer::new(system.catalog.id.len());
 
     while time <= time_end {
-        leapfrog_timestep(
-            &mut small_bodies,
-            &mut large_bodies,
-            &mut large_acceleration_scratch,
-            time_step,
-        );
+        leapfrog_timestep(&mut system.state, &mut force_buffer, time_step);
 
         time += time_step;
-
-        for body in &large_bodies {
-            append_body_timestep(body, time)?;
-        }
-
-        for body in &small_bodies {
-            append_body_timestep(body, time)?;
-        }
     }
 
     Ok(())

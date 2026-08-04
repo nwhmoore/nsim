@@ -7,6 +7,14 @@ pub struct ForceBuffer {
 }
 
 impl ForceBuffer {
+    pub fn new(number_particles: usize) -> Self {
+        ForceBuffer {
+            ax: vec![0.0; number_particles],
+            ay: vec![0.0; number_particles],
+            az: vec![0.0; number_particles],
+        }
+    }
+
     pub fn update_accelerations(&mut self, state: &ParticleState) {
         for target_index in 0..state.mass.len() {
             let mut ax = 0.0;
