@@ -63,7 +63,7 @@ impl ForceBuffer {
                 ay += gravity_acceleration(state.y[target_index], dist_squared, source_mass);
                 az += gravity_acceleration(state.z[target_index], dist_squared, source_mass);
             }
-            
+
             self.ax[target_index] = ax;
             self.ay[target_index] = ay;
             self.az[target_index] = az;
