@@ -1,4 +1,6 @@
-//! Command-line entry point for the N-body simulation.
+//! `nsim` is a small Rust N-body simulation prototype. It currently models
+//! massive bodies and massless test particles using a fixed-timestep
+//! leapfrog/velocity-Verlet integrator.
 #![warn(missing_docs)]
 
 use std::f64::consts::PI;

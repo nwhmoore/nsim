@@ -79,6 +79,7 @@ impl ForceBuffer {
 ///
 /// The calculation is singular when `dist_squared` is zero; callers should
 /// prevent coincident source and target positions when appropriate.
+#[inline]
 pub fn gravity_acceleration(dimension_dist: f64, dist_squared: f64, attractor_mass: f64) -> f64 {
     // fvec = m1 avec = g m1 m2 / rmag^3 rvec
 
