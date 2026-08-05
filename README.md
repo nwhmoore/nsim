@@ -1,7 +1,7 @@
 # nsim
 
-`nsim` is a small Rust N-body simulation prototype. It currently models
-massive bodies and massless test particles using a fixed-timestep
+`nsim` is a small Rust N-body simulation prototype. It currently models massive
+bodies and massless test particles using a fixed-timestep
 leapfrog/velocity-Verlet integrator.
 
 ## Current model
@@ -9,17 +9,18 @@ leapfrog/velocity-Verlet integrator.
 The simulator uses a structure-of-arrays layout:
 
 - `Particle` describes the initial properties of one particle.
-- `ParticleSystem` stores particle metadata in a `ParticleCatalog` and
-  numerical values in a `ParticleState`.
+- `ParticleSystem` stores particle metadata in a `ParticleCatalog` and numerical
+  values in a `ParticleState`.
 - `ForceBuffer` stores the Cartesian acceleration of every particle.
 - `leapfrog_timestep` advances the state by one fixed timestep.
 
-Particle indices are shared across the catalog, state, force buffer, and
-output routines. The vectors for a particle at index `i` must remain aligned.
+Particle indices are shared across the catalog, state, force buffer, and output
+routines. The vectors for a particle at index `i` must remain aligned.
 
 ## Units
 
-By default the gravitational constant is set to `G = 4π²`. This naturally sets the units of the simulation to astronomical units:
+By default the gravitational constant is set to `G = 4π²`. This naturally sets
+the units of the simulation to astronomical units:
 
 - distance: AU
 - time: years
@@ -27,7 +28,8 @@ By default the gravitational constant is set to `G = 4π²`. This naturally sets
 - acceleration: AU/year²
 - mass: solar masses
 
-For other units, change the gravitaitonal constant `GRAVITY` in [`src/main.rs`](src/main.rs).
+For other units, change the gravitaitonal constant `GRAVITY` in
+[`src/main.rs`](src/main.rs).
 
 ## Running the example
 
@@ -46,8 +48,8 @@ The example configuration is in [`src/main.rs`](src/main.rs). It creates:
 
 ## Output
 
-At startup, the program creates the `output/` directory if necessary and
-creates one file per particle:
+At startup, the program creates the `output/` directory if necessary and creates
+one file per particle:
 
 ```text
 output/Sol.out
@@ -64,9 +66,9 @@ time   x    y    z    u    v    w
 0.00000000000000000e0 5.00000000000000000e0 0.00000000000000000e0 ...
 ```
 
-The values use scientific notation with 17 digits after the decimal point.
-The columns are time, position `(x, y, z)`, and velocity `(u, v, w)`, in the
-units chosen above.
+The values use scientific notation with 17 digits after the decimal point. The
+columns are time, position `(x, y, z)`, and velocity `(u, v, w)`, in the units
+chosen above.
 
 ## Integration method
 
@@ -87,8 +89,8 @@ force calculation uses
 a = -G · M · (x - x_source) / |x - x_source|³
 ```
 
-Self-interaction is skipped. The force buffer is recomputed before each
-velocity kick and reused between timesteps.
+Self-interaction is skipped. The force buffer is recomputed before each velocity
+kick and reused between timesteps.
 
 ## Accuracy
 

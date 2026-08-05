@@ -2,6 +2,8 @@
 //! massive bodies and massless test particles using a fixed-timestep
 //! leapfrog/velocity-Verlet integrator.
 #![warn(missing_docs)]
+#![warn(clippy::all, clippy::pedantic)]
+#![warn(rustdoc::broken_intra_doc_links)]
 
 use std::f64::consts::PI;
 
@@ -12,6 +14,7 @@ use crate::{
     particle::{Particle, ParticleSystem},
 };
 
+mod diagnostics;
 mod force;
 mod integration;
 mod output;

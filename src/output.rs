@@ -31,12 +31,12 @@ fn particle_name(system: &ParticleSystem, particle_index: usize) -> io::Result<&
 
 /// Creates or truncates the output file for one particle.
 ///
-/// The file is written to `output/<particle-name>.out`. The output directory
-/// is created automatically when it does not already exist. The first line is
-/// the particle name and the second line contains the column headings.
+/// The file is written to `output/<particle-name>.out`. The output directory is
+/// created automatically when it does not already exist. The first line is the
+/// particle name and the second line contains the column headings.
 ///
-/// `particle_index` must refer to an entry in the particle catalog.
-/// Existing files with the same particle name are truncated.
+/// `particle_index` must refer to an entry in the particle catalog. Existing
+/// files with the same particle name are truncated.
 ///
 /// # Errors
 ///
@@ -84,13 +84,13 @@ pub fn append_particle_timestep(
         system.state.vz.get(particle_index),
     );
 
-    let (Some(&x), Some(&y), Some(&z)) = position else {
+    let (Some(&x_pos), Some(&y_pos), Some(&z_pos)) = position else {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             format!("position data is missing for particle index {particle_index}"),
         ));
     };
-    let (Some(&u), Some(&v), Some(&w)) = velocity else {
+    let (Some(&vx), Some(&vy), Some(&vz)) = velocity else {
         return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             format!("velocity data is missing for particle index {particle_index}"),
@@ -101,7 +101,7 @@ pub fn append_particle_timestep(
 
     writeln!(
         file,
-        "{time:.17e} {x:.17e} {y:.17e} {z:.17e} {u:.17e} {v:.17e} {w:.17e}"
+        "{time:.17e} {x_pos:.17e} {y_pos:.17e} {z_pos:.17e} {vx:.17e} {vy:.17e} {vz:.17e}"
     )?;
 
     Ok(())
