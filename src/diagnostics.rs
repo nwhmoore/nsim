@@ -36,6 +36,8 @@ pub struct Diagnostics {
 
     /// Center-of-mass position of the active massive bodies.
     pub center_of_mass_position: VectorSeries,
+    /// Center-of-mass velocity of the active massive bodies.
+    pub center_of_mass_velocity: VectorSeries,
 }
 
 impl Diagnostics {
@@ -101,9 +103,13 @@ impl Diagnostics {
         self.grav_potential_energy.push(potential_energy);
         self.total_energy.push(kinetic_energy + potential_energy);
 
-        self.linear_momentum.x.push(momentum_x.total());
-        self.linear_momentum.y.push(momentum_y.total());
-        self.linear_momentum.z.push(momentum_z.total());
+        let total_linear_momentum_x = momentum_x.total();
+        let total_linear_momentum_y = momentum_y.total();
+        let total_linear_momentum_z = momentum_z.total();
+
+        self.linear_momentum.x.push(total_linear_momentum_x);
+        self.linear_momentum.y.push(total_linear_momentum_y);
+        self.linear_momentum.z.push(total_linear_momentum_z);
 
         self.angular_momentum.x.push(angular_momentum_x.total());
         self.angular_momentum.y.push(angular_momentum_y.total());
@@ -118,5 +124,16 @@ impl Diagnostics {
         self.center_of_mass_position
             .z
             .push(mass_position_z.total() / mass);
+
+        // v_cm = (sum_i m_i v_i) / (sum_i m_i) = P / M.
+        self.center_of_mass_velocity
+            .x
+            .push(total_linear_momentum_x / mass);
+        self.center_of_mass_velocity
+            .y
+            .push(total_linear_momentum_y / mass);
+        self.center_of_mass_velocity
+            .z
+            .push(total_linear_momentum_z / mass);
     }
 }

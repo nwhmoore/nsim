@@ -71,7 +71,11 @@ columns are time, position `(x, y, z)`, and velocity `(u, v, w)`, in the units
 chosen above.
 
 Global diagnostics are collected in memory by `Diagnostics` while the program
-runs.
+runs and written at the end of the simulation to `output/diagnostics.out`.
+The file begins with `initial_state`, `final_state`, and `total_change` rows,
+then contains a `record` table with one row per diagnostic timestep. Its
+columns are total mass, kinetic, potential, and total energy; linear and
+angular momentum; and center-of-mass position and velocity.
 
 ## Integration method
 

@@ -1,4 +1,4 @@
-//! Text-file output for particle trajectories.
+//! Text-file output for particle trajectories and system diagnostics.
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -6,13 +6,22 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::particle::ParticleSystem;
+use crate::{diagnostics::Diagnostics, particle::ParticleSystem};
 
 const OUTPUT_DIRECTORY: &str = "output";
-const COLUMN_HEADER: &str = "time   x    y    z    u    v    w";
+const PARTICLE_COLUMN_HEADER: &str = "time   x    y    z    u    v    w";
+const DIAGNOSTICS_FILE: &str = "diagnostics.out";
+const DIAGNOSTICS_COLUMN_HEADER: &str = concat!(
+    "time   total_mass   kinetic_energy   grav_potential_energy   total_energy   ",
+    "p_x   p_y   p_z   l_x   l_y   l_z   com_x   com_y   com_z   com_u   com_v   com_w"
+);
 
 fn output_path(name: &str) -> PathBuf {
     Path::new(OUTPUT_DIRECTORY).join(format!("{name}.out"))
+}
+
+fn diagnostics_path() -> PathBuf {
+    Path::new(OUTPUT_DIRECTORY).join(DIAGNOSTICS_FILE)
 }
 
 fn particle_name(system: &ParticleSystem, particle_index: usize) -> io::Result<&str> {
@@ -48,7 +57,7 @@ pub fn create_particle_file(system: &ParticleSystem, particle_index: usize) -> i
 
     let mut file = File::create(output_path(name))?;
     writeln!(file, "{name}")?;
-    writeln!(file, "{COLUMN_HEADER}")?;
+    writeln!(file, "{PARTICLE_COLUMN_HEADER}")?;
 
     Ok(())
 }
@@ -105,4 +114,149 @@ pub fn append_particle_timestep(
     )?;
 
     Ok(())
+}
+
+/// Writes the complete diagnostics report to `output/diagnostics.out`.
+///
+/// The report starts with initial-state, final-state, and total-change rows,
+/// followed by every recorded diagnostic sample. All numeric values use the
+/// same scientific-notation precision as the particle trajectory files.
+///
+/// Every diagnostics series must contain the same non-zero number of samples.
+/// Existing diagnostics output is replaced.
+///
+/// # Errors
+///
+/// Returns an I/O error if the output directory or file cannot be created, if
+/// writing fails, or if the diagnostics series are empty or misaligned.
+pub fn write_diagnostics_file(diagnostics: &Diagnostics) -> io::Result<()> {
+    let sample_count = validate_diagnostics(diagnostics)?;
+    let initial = diagnostics_values_at(diagnostics, 0);
+    let final_values = diagnostics_values_at(diagnostics, sample_count - 1);
+    let total_change = std::array::from_fn(|index| final_values[index] - initial[index]);
+
+    fs::create_dir_all(OUTPUT_DIRECTORY)?;
+    let mut file = File::create(diagnostics_path())?;
+
+    writeln!(file, "Diagnostics")?;
+    writeln!(file, "summary")?;
+    writeln!(file, "state   {DIAGNOSTICS_COLUMN_HEADER}")?;
+    write_labeled_diagnostics_row(&mut file, "initial_state", &initial)?;
+    write_labeled_diagnostics_row(&mut file, "final_state", &final_values)?;
+    write_labeled_diagnostics_row(&mut file, "total_change", &total_change)?;
+
+    writeln!(file)?;
+    writeln!(file, "record")?;
+    writeln!(file, "{DIAGNOSTICS_COLUMN_HEADER}")?;
+    for sample_index in 0..sample_count {
+        write_diagnostics_values(&mut file, &diagnostics_values_at(diagnostics, sample_index))?;
+    }
+
+    Ok(())
+}
+
+fn validate_diagnostics(diagnostics: &Diagnostics) -> io::Result<usize> {
+    let sample_count = diagnostics.time.len();
+    if sample_count == 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "cannot write an empty diagnostics record",
+        ));
+    }
+
+    for (name, series_len) in [
+        ("total_mass", diagnostics.total_mass.len()),
+        ("kinetic_energy", diagnostics.kinetic_energy.len()),
+        (
+            "grav_potential_energy",
+            diagnostics.grav_potential_energy.len(),
+        ),
+        ("total_energy", diagnostics.total_energy.len()),
+        ("linear_momentum.x", diagnostics.linear_momentum.x.len()),
+        ("linear_momentum.y", diagnostics.linear_momentum.y.len()),
+        ("linear_momentum.z", diagnostics.linear_momentum.z.len()),
+        ("angular_momentum.x", diagnostics.angular_momentum.x.len()),
+        ("angular_momentum.y", diagnostics.angular_momentum.y.len()),
+        ("angular_momentum.z", diagnostics.angular_momentum.z.len()),
+        (
+            "center_of_mass_position.x",
+            diagnostics.center_of_mass_position.x.len(),
+        ),
+        (
+            "center_of_mass_position.y",
+            diagnostics.center_of_mass_position.y.len(),
+        ),
+        (
+            "center_of_mass_position.z",
+            diagnostics.center_of_mass_position.z.len(),
+        ),
+        (
+            "center_of_mass_velocity.x",
+            diagnostics.center_of_mass_velocity.x.len(),
+        ),
+        (
+            "center_of_mass_velocity.y",
+            diagnostics.center_of_mass_velocity.y.len(),
+        ),
+        (
+            "center_of_mass_velocity.z",
+            diagnostics.center_of_mass_velocity.z.len(),
+        ),
+    ] {
+        if series_len != sample_count {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "diagnostics series {name} has {series_len} samples; expected {sample_count}"
+                ),
+            ));
+        }
+    }
+
+    Ok(sample_count)
+}
+
+fn diagnostics_values_at(diagnostics: &Diagnostics, sample_index: usize) -> [f64; 17] {
+    [
+        diagnostics.time[sample_index],
+        diagnostics.total_mass[sample_index],
+        diagnostics.kinetic_energy[sample_index],
+        diagnostics.grav_potential_energy[sample_index],
+        diagnostics.total_energy[sample_index],
+        diagnostics.linear_momentum.x[sample_index],
+        diagnostics.linear_momentum.y[sample_index],
+        diagnostics.linear_momentum.z[sample_index],
+        diagnostics.angular_momentum.x[sample_index],
+        diagnostics.angular_momentum.y[sample_index],
+        diagnostics.angular_momentum.z[sample_index],
+        diagnostics.center_of_mass_position.x[sample_index],
+        diagnostics.center_of_mass_position.y[sample_index],
+        diagnostics.center_of_mass_position.z[sample_index],
+        diagnostics.center_of_mass_velocity.x[sample_index],
+        diagnostics.center_of_mass_velocity.y[sample_index],
+        diagnostics.center_of_mass_velocity.z[sample_index],
+    ]
+}
+
+fn write_labeled_diagnostics_row(
+    file: &mut File,
+    label: &str,
+    values: &[f64; 17],
+) -> io::Result<()> {
+    write!(file, "{label}")?;
+    for value in values {
+        write!(file, " {value:.17e}")?;
+    }
+    writeln!(file)
+}
+
+fn write_diagnostics_values(file: &mut File, values: &[f64; 17]) -> io::Result<()> {
+    let (first, rest) = values
+        .split_first()
+        .expect("diagnostics values are non-empty");
+    write!(file, "{first:.17e}")?;
+    for value in rest {
+        write!(file, " {value:.17e}")?;
+    }
+    writeln!(file)
 }

@@ -11,7 +11,7 @@ use crate::{
     diagnostics::Diagnostics,
     force::ForceBuffer,
     integration::leapfrog_timestep,
-    output::{append_particle_timestep, create_particle_file},
+    output::{append_particle_timestep, create_particle_file, write_diagnostics_file},
     particle::{Particle, ParticleSystem},
 };
 
@@ -80,6 +80,8 @@ fn main() -> std::io::Result<()> {
 
         diagnostics.record(time, &system.state, force_evaluation.potential_energy);
     }
+
+    write_diagnostics_file(&diagnostics)?;
 
     Ok(())
 }
