@@ -30,9 +30,7 @@ const GRAVITY: f64 = 4.0 * PI * PI;
 fn main() -> std::io::Result<()> {
     // ---------------------------  INITIAL PARAMETERS ------------------------
 
-    // years
     let time_start = 0.0;
-    // years
     let time_end = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
     // 1% of period
     let time_step = time_end * 0.01;

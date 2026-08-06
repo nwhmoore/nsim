@@ -28,7 +28,7 @@ the units of the simulation to astronomical units:
 - acceleration: AU/year²
 - mass: solar masses
 
-For other units, change the gravitaitonal constant `GRAVITY` in
+For other units, change the gravitational constant `GRAVITY` in
 [`src/main.rs`](src/main.rs).
 
 ## Running the example
@@ -70,12 +70,16 @@ The values use scientific notation with 17 digits after the decimal point. The
 columns are time, position `(x, y, z)`, and velocity `(u, v, w)`, in the units
 chosen above.
 
+Global diagnostics are collected in memory by `Diagnostics` while the program
+runs.
+
 ## Integration method
 
-Each call to `leapfrog_timestep` performs a kick-drift-kick update:
+Each call to `leapfrog_timestep` performs a kick-drift-kick update. The force
+buffer must already contain the acceleration at the current positions:
 
 ```text
-aₙ       = acceleration at position xₙ
+aₙ       = cached acceleration at position xₙ
 vₙ₊₁/₂   = vₙ + aₙ · Δt/2
 xₙ₊₁     = xₙ + vₙ₊₁/₂ · Δt
 aₙ₊₁     = acceleration at position xₙ₊₁
@@ -89,8 +93,10 @@ force calculation uses
 a = -G · M · (x - x_source) / |x - x_source|³
 ```
 
-Self-interaction is skipped. The force buffer is recomputed before each velocity
-kick and reused between timesteps.
+Self-interaction is skipped. The initial force evaluation populates the buffer;
+each timestep computes the acceleration at the new position and leaves that
+value cached for the next timestep. The same force evaluation also returns the
+pairwise gravitational potential energy used by the diagnostics.
 
 ## Accuracy
 

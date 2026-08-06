@@ -76,7 +76,7 @@ pub struct ParticleCatalog {
     pub id: Vec<usize>,
     /// Particle names, also used as output filename stems.
     pub name: Vec<String>,
-    /// Particle radii in the simulation's distance unit (AU).
+    /// Particle radii.
     pub radius: Vec<f64>,
 }
 
@@ -87,20 +87,10 @@ pub struct ParticleState {
     /// Particle masses; `None` denotes a massless test particle.
     pub mass: Vec<Option<f64>>,
 
-    // /// X coordinates.
-    // pub x: Vec<f64>,
-    // /// Y coordinates.
-    // pub y: Vec<f64>,
-    // /// Z coordinates.
-    // pub z: Vec<f64>,
+    /// Cartesian positions.
     pub position: VectorSeries,
 
-    // /// X velocity components.
-    // pub vx: Vec<f64>,
-    // /// Y velocity components.
-    // pub vy: Vec<f64>,
-    // /// Z velocity components.
-    // pub vz: Vec<f64>,
+    /// Cartesian velocities.
     pub velocity: VectorSeries,
 
     /// Whether each particle is active in the system.

@@ -1,4 +1,9 @@
 //! Fixed-timestep leapfrog/velocity-Verlet integration.
+//!
+//! The integrator reuses the acceleration already stored in [`ForceBuffer`]
+//! for the current state. The caller must perform one initial force evaluation
+//! before the first timestep. Each completed timestep leaves the buffer ready
+//! for the next timestep.
 
 use crate::{
     force::{ForceBuffer, ForceEvaluation},
@@ -9,14 +14,26 @@ use crate::{
 ///
 /// The update sequence is:
 ///
-/// 1. Compute accelerations at the current positions.
+/// 1. Use the cached acceleration at the current positions for the first kick.
 /// 2. Advance velocities by half a timestep.
 /// 3. Advance positions by one full timestep using the half-step velocities.
-/// 4. Recompute accelerations at the new positions.
+/// 4. Recompute acceleration and potential energy at the new positions.
 /// 5. Advance velocities by the remaining half timestep.
 ///
-/// The state and force-buffer vectors must have matching lengths and the force
-/// buffer is reused in place.
+/// The state and force-buffer vectors must have matching lengths. Before the
+/// call, the force buffer must contain accelerations evaluated at the input
+/// positions. After the call, it contains accelerations evaluated at the
+/// output positions, and can be reused by the next call.
+///
+/// # Returns
+///
+/// The force evaluation at the output state, including its gravitational
+/// potential energy.
+///
+/// # Panics
+///
+/// This function may panic if the state and force-buffer component vectors do
+/// not have matching lengths.
 pub fn leapfrog_timestep(
     state: &mut ParticleState,
     force_buffer: &mut ForceBuffer,
@@ -27,13 +44,16 @@ pub fn leapfrog_timestep(
             continue;
         }
 
-        state.velocity.x[particle_index] += force_buffer.acceleration.x[particle_index] * 0.5 * fixed_dt;
+        state.velocity.x[particle_index] +=
+            force_buffer.acceleration.x[particle_index] * 0.5 * fixed_dt;
         state.position.x[particle_index] += state.velocity.x[particle_index] * fixed_dt;
 
-        state.velocity.y[particle_index] += force_buffer.acceleration.y[particle_index] * 0.5 * fixed_dt;
+        state.velocity.y[particle_index] +=
+            force_buffer.acceleration.y[particle_index] * 0.5 * fixed_dt;
         state.position.y[particle_index] += state.velocity.y[particle_index] * fixed_dt;
 
-        state.velocity.z[particle_index] += force_buffer.acceleration.z[particle_index] * 0.5 * fixed_dt;
+        state.velocity.z[particle_index] +=
+            force_buffer.acceleration.z[particle_index] * 0.5 * fixed_dt;
         state.position.z[particle_index] += state.velocity.z[particle_index] * fixed_dt;
     }
 
@@ -44,9 +64,12 @@ pub fn leapfrog_timestep(
             continue;
         }
 
-        state.velocity.x[particle_index] += force_buffer.acceleration.x[particle_index] * 0.5 * fixed_dt;
-        state.velocity.y[particle_index] += force_buffer.acceleration.y[particle_index] * 0.5 * fixed_dt;
-        state.velocity.z[particle_index] += force_buffer.acceleration.z[particle_index] * 0.5 * fixed_dt;
+        state.velocity.x[particle_index] +=
+            force_buffer.acceleration.x[particle_index] * 0.5 * fixed_dt;
+        state.velocity.y[particle_index] +=
+            force_buffer.acceleration.y[particle_index] * 0.5 * fixed_dt;
+        state.velocity.z[particle_index] +=
+            force_buffer.acceleration.z[particle_index] * 0.5 * fixed_dt;
     }
 
     force_evaluation

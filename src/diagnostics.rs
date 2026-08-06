@@ -1,26 +1,50 @@
+//! Whole-system diagnostics recorded as structure-of-arrays time series.
+//!
+//! Global quantities include only active particles with a `Some` mass value.
+//! Massless test particles are intentionally excluded from total mass,
+//! kinetic energy, momentum, angular momentum, and center-of-mass quantities.
+
 use crate::{
     particle::ParticleState,
     utils::{KahanAccumulator, VectorSeries},
 };
 
+/// Time series of global quantities derived from simulation states.
+///
+/// Every field has one entry per call to [`Diagnostics::record`]. The entry at
+/// a given index therefore refers to the time at the same index in [`Self::time`].
 #[derive(Default)]
 pub struct Diagnostics {
+    /// Simulation time associated with each diagnostic sample.
     pub time: Vec<f64>,
 
+    /// Total mass of active massive bodies.
     pub total_mass: Vec<f64>,
 
+    /// Total kinetic energy of active massive bodies.
     pub kinetic_energy: Vec<f64>,
+    /// Pairwise Newtonian gravitational potential energy.
     pub grav_potential_energy: Vec<f64>,
+    /// Sum of kinetic and gravitational potential energy.
     pub total_energy: Vec<f64>,
 
+    /// Total linear momentum, stored as parallel component series.
     pub linear_momentum: VectorSeries,
+    /// Total angular momentum about the simulation origin, stored as parallel
+    /// component series.
     pub angular_momentum: VectorSeries,
 
+    /// Center-of-mass position of the active massive bodies.
     pub center_of_mass_position: VectorSeries,
-    //pub center_of_mass_velocity: VectorSeries,
 }
 
 impl Diagnostics {
+    /// Records one diagnostic sample for a simulation state.
+    ///
+    /// `potential_energy` must have been evaluated for the same positions in
+    /// `state`. It is supplied by the force model so that diagnostics do not
+    /// duplicate the force-law calculation. The center-of-mass values are
+    /// undefined if `state` contains no active massive bodies.
     pub fn record(&mut self, time: f64, state: &ParticleState, potential_energy: f64) {
         self.time.push(time);
 

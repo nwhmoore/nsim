@@ -1,4 +1,5 @@
-//! Gravitational acceleration calculation and reusable acceleration storage.
+//! Gravitational acceleration, potential-energy calculation, and reusable
+//! acceleration storage.
 
 use crate::{
     GRAVITY,
@@ -6,7 +7,9 @@ use crate::{
     utils::{KahanAccumulator, VectorSeries},
 };
 
+/// Quantities calculated alongside one gravitational force evaluation.
 pub struct ForceEvaluation {
+    /// Gravitational potential energy of the active massive bodies.
     pub potential_energy: f64,
 }
 
@@ -15,12 +18,10 @@ pub struct ForceEvaluation {
 /// The three vectors are parallel to the vectors in [`ParticleState`]: entry
 /// `i` in each vector belongs to the particle at index `i`.
 pub struct ForceBuffer {
-    // /// X acceleration components in AU/year².
-    // pub ax: Vec<f64>,
-    // /// Y acceleration components in AU/year².
-    // pub ay: Vec<f64>,
-    // /// Z acceleration components in AU/year².
-    // pub az: Vec<f64>,
+    /// Cartesian acceleration components.
+    ///
+    /// The component vectors are aligned with the particle indices in the
+    /// [`ParticleState`] used for the most recent evaluation.
     pub acceleration: VectorSeries,
 }
 
@@ -36,12 +37,19 @@ impl ForceBuffer {
         }
     }
 
-    /// Recomputes and stores the acceleration of every particle.
+    /// Recomputes and stores the acceleration of every active particle.
     ///
     /// Massive particles contribute to the acceleration of every other
     /// particle. Massless particles still receive acceleration but do not
-    /// contribute to the force calculation. Self-interaction is skipped.
-    /// Existing values in this buffer are overwritten.
+    /// contribute to the force calculation. Self-interaction is skipped. The
+    /// returned potential energy includes each pair of active massive bodies
+    /// once. Existing acceleration values for active particles are overwritten;
+    /// values for inactive particles are left unchanged.
+    ///
+    /// The position, velocity, mass, and activity vectors in `state` must have
+    /// matching lengths. Coincident active particles produce the singular
+    /// Newtonian force and potential and should be prevented by the caller.
+    #[must_use]
     pub fn compute_accelerations(&mut self, state: &ParticleState) -> ForceEvaluation {
         let mut grav_pot_ener = KahanAccumulator::default();
         for target_index in 0..state.mass.len() {
@@ -100,7 +108,7 @@ impl ForceBuffer {
 ///
 /// `dimension_dist` is the target coordinate minus the source coordinate,
 /// `dist_squared` is the full three-dimensional separation squared, and
-/// `attractor_mass` is the source mass in solar-mass units.
+/// `attractor_mass` is the source mass.
 ///
 /// The calculation is singular when `dist_squared` is zero; callers should
 /// prevent coincident source and target positions when appropriate.
@@ -109,6 +117,12 @@ pub fn gravity_acceleration(attractor_mass: f64, dimension_dist: f64, dist_squar
     -GRAVITY * attractor_mass * dimension_dist / (dist_squared * dist_squared.sqrt())
 }
 
+/// Computes the Newtonian gravitational potential energy of one massive pair.
+///
+/// `dist_squared` is the squared separation of the bodies. The caller is
+/// responsible for supplying nonzero separation and for counting each pair
+/// only once.
+#[must_use]
 pub fn gravity_potential(self_mass: f64, attractor_mass: f64, dist_squared: f64) -> f64 {
     -GRAVITY * self_mass * attractor_mass / dist_squared.sqrt()
 }
