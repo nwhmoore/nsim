@@ -10,8 +10,9 @@ pub struct Diagnostics {
     pub total_mass: Vec<f64>,
 
     pub kinetic_energy: Vec<f64>,
-    //pub grav_potential_energy: Vec<f64>,
-    //pub total_energy: Vec<f64>,
+    pub grav_potential_energy: Vec<f64>,
+    pub total_energy: Vec<f64>,
+
     pub linear_momentum: VectorSeries,
     pub angular_momentum: VectorSeries,
 
@@ -20,7 +21,7 @@ pub struct Diagnostics {
 }
 
 impl Diagnostics {
-    pub fn record(&mut self, time: f64, state: &ParticleState) {
+    pub fn record(&mut self, time: f64, state: &ParticleState, potential_energy: f64) {
         self.time.push(time);
 
         let mut total_mass = KahanAccumulator::default();
@@ -69,9 +70,12 @@ impl Diagnostics {
         }
 
         let mass = total_mass.total();
-
         self.total_mass.push(mass);
-        self.kinetic_energy.push(kinetic_energy.total());
+
+        let kinetic_energy = kinetic_energy.total();
+        self.kinetic_energy.push(kinetic_energy);
+        self.grav_potential_energy.push(potential_energy);
+        self.total_energy.push(kinetic_energy + potential_energy);
 
         self.linear_momentum.x.push(momentum_x.total());
         self.linear_momentum.y.push(momentum_y.total());

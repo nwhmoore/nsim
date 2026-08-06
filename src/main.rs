@@ -67,11 +67,12 @@ fn main() -> std::io::Result<()> {
         append_particle_timestep(&system, particle_index, time_start)?;
     }
 
-    diagnostics.record(time, &system.state);
+    let initial_evaluation = force_buffer.compute_accelerations(&system.state);
+    diagnostics.record(time, &system.state, initial_evaluation.potential_energy);
     // ------------------------------------------------------------------------
 
     while time <= time_end {
-        leapfrog_timestep(&mut system.state, &mut force_buffer, time_step);
+        let force_evaluation = leapfrog_timestep(&mut system.state, &mut force_buffer, time_step);
 
         time += time_step;
 
@@ -79,7 +80,7 @@ fn main() -> std::io::Result<()> {
             append_particle_timestep(&system, particle_index, time)?;
         }
 
-        diagnostics.record(time, &system.state);
+        diagnostics.record(time, &system.state, force_evaluation.potential_energy);
     }
 
     Ok(())

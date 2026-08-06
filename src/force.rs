@@ -1,6 +1,14 @@
 //! Gravitational acceleration calculation and reusable acceleration storage.
 
-use crate::{GRAVITY, particle::ParticleState, utils::VectorSeries};
+use crate::{
+    GRAVITY,
+    particle::ParticleState,
+    utils::{KahanAccumulator, VectorSeries},
+};
+
+pub struct ForceEvaluation {
+    pub potential_energy: f64,
+}
 
 /// Per-particle acceleration components used by the integrator.
 ///
@@ -34,15 +42,18 @@ impl ForceBuffer {
     /// particle. Massless particles still receive acceleration but do not
     /// contribute to the force calculation. Self-interaction is skipped.
     /// Existing values in this buffer are overwritten.
-    pub fn update_accelerations(&mut self, state: &ParticleState) {
+    pub fn compute_accelerations(&mut self, state: &ParticleState) -> ForceEvaluation {
+        let mut grav_pot_ener = KahanAccumulator::default();
         for target_index in 0..state.mass.len() {
             if !state.alive[target_index] {
                 continue;
             }
 
-            let mut ax = 0.0;
-            let mut ay = 0.0;
-            let mut az = 0.0;
+            let target_mass = state.mass[target_index];
+
+            let mut ax = KahanAccumulator::default();
+            let mut ay = KahanAccumulator::default();
+            let mut az = KahanAccumulator::default();
 
             for source_index in 0..state.mass.len() {
                 if target_index == source_index {
@@ -62,14 +73,25 @@ impl ForceBuffer {
                 let dz = state.position.z[target_index] - state.position.z[source_index];
 
                 let dist_squared = dx * dx + dy * dy + dz * dz;
-                ax += gravity_acceleration(dx, dist_squared, source_mass);
-                ay += gravity_acceleration(dy, dist_squared, source_mass);
-                az += gravity_acceleration(dz, dist_squared, source_mass);
+
+                ax.add(gravity_acceleration(source_mass, dx, dist_squared));
+                ay.add(gravity_acceleration(source_mass, dy, dist_squared));
+                az.add(gravity_acceleration(source_mass, dz, dist_squared));
+
+                if target_index < source_index
+                    && let Some(target_mass) = target_mass
+                {
+                    grav_pot_ener.add(gravity_potential(target_mass, source_mass, dist_squared));
+                }
             }
 
-            self.acceleration.x[target_index] = ax;
-            self.acceleration.y[target_index] = ay;
-            self.acceleration.z[target_index] = az;
+            self.acceleration.x[target_index] = ax.total();
+            self.acceleration.y[target_index] = ay.total();
+            self.acceleration.z[target_index] = az.total();
+        }
+
+        ForceEvaluation {
+            potential_energy: grav_pot_ener.total(),
         }
     }
 }
@@ -82,7 +104,11 @@ impl ForceBuffer {
 ///
 /// The calculation is singular when `dist_squared` is zero; callers should
 /// prevent coincident source and target positions when appropriate.
-pub fn gravity_acceleration(dimension_dist: f64, dist_squared: f64, attractor_mass: f64) -> f64 {
+pub fn gravity_acceleration(attractor_mass: f64, dimension_dist: f64, dist_squared: f64) -> f64 {
     // fvec = m1 avec = g m1 m2 / rmag^3 rvec
     -GRAVITY * attractor_mass * dimension_dist / (dist_squared * dist_squared.sqrt())
+}
+
+pub fn gravity_potential(self_mass: f64, attractor_mass: f64, dist_squared: f64) -> f64 {
+    -GRAVITY * self_mass * attractor_mass / dist_squared.sqrt()
 }
