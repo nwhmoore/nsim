@@ -74,14 +74,14 @@ pub fn append_particle_timestep(
 ) -> io::Result<()> {
     let name = particle_name(system, particle_index)?;
     let position = (
-        system.state.x.get(particle_index),
-        system.state.y.get(particle_index),
-        system.state.z.get(particle_index),
+        system.state.position.x.get(particle_index),
+        system.state.position.y.get(particle_index),
+        system.state.position.z.get(particle_index),
     );
     let velocity = (
-        system.state.vx.get(particle_index),
-        system.state.vy.get(particle_index),
-        system.state.vz.get(particle_index),
+        system.state.velocity.x.get(particle_index),
+        system.state.velocity.y.get(particle_index),
+        system.state.velocity.z.get(particle_index),
     );
 
     let (Some(&x_pos), Some(&y_pos), Some(&z_pos)) = position else {

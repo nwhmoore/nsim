@@ -22,14 +22,14 @@ pub fn leapfrog_timestep(state: &mut ParticleState, force_buffer: &mut ForceBuff
             continue;
         }
 
-        state.vx[particle_index] += force_buffer.ax[particle_index] * 0.5 * dt;
-        state.x[particle_index] += state.vx[particle_index] * dt;
+        state.velocity.x[particle_index] += force_buffer.acceleration.x[particle_index] * 0.5 * dt;
+        state.position.x[particle_index] += state.velocity.x[particle_index] * dt;
 
-        state.vy[particle_index] += force_buffer.ay[particle_index] * 0.5 * dt;
-        state.y[particle_index] += state.vy[particle_index] * dt;
+        state.velocity.y[particle_index] += force_buffer.acceleration.y[particle_index] * 0.5 * dt;
+        state.position.y[particle_index] += state.velocity.y[particle_index] * dt;
 
-        state.vz[particle_index] += force_buffer.az[particle_index] * 0.5 * dt;
-        state.z[particle_index] += state.vz[particle_index] * dt;
+        state.velocity.z[particle_index] += force_buffer.acceleration.z[particle_index] * 0.5 * dt;
+        state.position.z[particle_index] += state.velocity.z[particle_index] * dt;
     }
 
     force_buffer.update_accelerations(state);
@@ -39,8 +39,8 @@ pub fn leapfrog_timestep(state: &mut ParticleState, force_buffer: &mut ForceBuff
             continue;
         }
 
-        state.vx[particle_index] += force_buffer.ax[particle_index] * 0.5 * dt;
-        state.vy[particle_index] += force_buffer.ay[particle_index] * 0.5 * dt;
-        state.vz[particle_index] += force_buffer.az[particle_index] * 0.5 * dt;
+        state.velocity.x[particle_index] += force_buffer.acceleration.x[particle_index] * 0.5 * dt;
+        state.velocity.y[particle_index] += force_buffer.acceleration.y[particle_index] * 0.5 * dt;
+        state.velocity.z[particle_index] += force_buffer.acceleration.z[particle_index] * 0.5 * dt;
     }
 }

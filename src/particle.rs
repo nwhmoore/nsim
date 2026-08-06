@@ -1,5 +1,7 @@
 //! Particles in the simulation.
 
+use crate::utils::VectorSeries;
+
 /// Collection of particles stored as catalog metadata and simulation state.
 ///
 /// The catalog and state use a structure-of-arrays layout. Their vectors must
@@ -25,12 +27,16 @@ impl ParticleSystem {
             },
             state: ParticleState {
                 mass: Vec::new(),
-                x: Vec::new(),
-                y: Vec::new(),
-                z: Vec::new(),
-                vx: Vec::new(),
-                vy: Vec::new(),
-                vz: Vec::new(),
+                position: VectorSeries {
+                    x: Vec::new(),
+                    y: Vec::new(),
+                    z: Vec::new(),
+                },
+                velocity: VectorSeries {
+                    x: Vec::new(),
+                    y: Vec::new(),
+                    z: Vec::new(),
+                },
                 alive: Vec::new(),
             },
             next_particle_id: 0,
@@ -50,13 +56,13 @@ impl ParticleSystem {
 
         self.state.mass.push(particle.mass);
 
-        self.state.x.push(particle.pos.0);
-        self.state.y.push(particle.pos.1);
-        self.state.z.push(particle.pos.2);
+        self.state.position.x.push(particle.pos.0);
+        self.state.position.y.push(particle.pos.1);
+        self.state.position.z.push(particle.pos.2);
 
-        self.state.vx.push(particle.vel.0);
-        self.state.vy.push(particle.vel.1);
-        self.state.vz.push(particle.vel.2);
+        self.state.velocity.x.push(particle.vel.0);
+        self.state.velocity.y.push(particle.vel.1);
+        self.state.velocity.z.push(particle.vel.2);
 
         self.state.alive.push(true);
     }
@@ -81,19 +87,21 @@ pub struct ParticleState {
     /// Particle masses; `None` denotes a massless test particle.
     pub mass: Vec<Option<f64>>,
 
-    /// X coordinates.
-    pub x: Vec<f64>,
-    /// Y coordinates.
-    pub y: Vec<f64>,
-    /// Z coordinates.
-    pub z: Vec<f64>,
+    // /// X coordinates.
+    // pub x: Vec<f64>,
+    // /// Y coordinates.
+    // pub y: Vec<f64>,
+    // /// Z coordinates.
+    // pub z: Vec<f64>,
+    pub position: VectorSeries,
 
-    /// X velocity components.
-    pub vx: Vec<f64>,
-    /// Y velocity components.
-    pub vy: Vec<f64>,
-    /// Z velocity components.
-    pub vz: Vec<f64>,
+    // /// X velocity components.
+    // pub vx: Vec<f64>,
+    // /// Y velocity components.
+    // pub vy: Vec<f64>,
+    // /// Z velocity components.
+    // pub vz: Vec<f64>,
+    pub velocity: VectorSeries,
 
     /// Whether each particle is active in the system.
     pub alive: Vec<bool>,

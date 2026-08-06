@@ -1,27 +1,30 @@
 //! Gravitational acceleration calculation and reusable acceleration storage.
 
-use crate::{GRAVITY, particle::ParticleState};
+use crate::{GRAVITY, particle::ParticleState, utils::VectorSeries};
 
 /// Per-particle acceleration components used by the integrator.
 ///
 /// The three vectors are parallel to the vectors in [`ParticleState`]: entry
 /// `i` in each vector belongs to the particle at index `i`.
 pub struct ForceBuffer {
-    /// X acceleration components in AU/year².
-    pub ax: Vec<f64>,
-    /// Y acceleration components in AU/year².
-    pub ay: Vec<f64>,
-    /// Z acceleration components in AU/year².
-    pub az: Vec<f64>,
+    // /// X acceleration components in AU/year².
+    // pub ax: Vec<f64>,
+    // /// Y acceleration components in AU/year².
+    // pub ay: Vec<f64>,
+    // /// Z acceleration components in AU/year².
+    // pub az: Vec<f64>,
+    pub acceleration: VectorSeries,
 }
 
 impl ForceBuffer {
     /// Creates a zeroed acceleration buffer for `number_particles` particles.
     pub fn new(number_particles: usize) -> Self {
         ForceBuffer {
-            ax: vec![0.0; number_particles],
-            ay: vec![0.0; number_particles],
-            az: vec![0.0; number_particles],
+            acceleration: VectorSeries {
+                x: vec![0.0; number_particles],
+                y: vec![0.0; number_particles],
+                z: vec![0.0; number_particles],
+            },
         }
     }
 
@@ -54,19 +57,19 @@ impl ForceBuffer {
                     continue;
                 };
 
-                let dx = state.x[target_index] - state.x[source_index];
-                let dy = state.y[target_index] - state.y[source_index];
-                let dz = state.z[target_index] - state.z[source_index];
+                let dx = state.position.x[target_index] - state.position.x[source_index];
+                let dy = state.position.y[target_index] - state.position.y[source_index];
+                let dz = state.position.z[target_index] - state.position.z[source_index];
 
                 let dist_squared = dx * dx + dy * dy + dz * dz;
-                ax += gravity_acceleration(state.x[target_index], dist_squared, source_mass);
-                ay += gravity_acceleration(state.y[target_index], dist_squared, source_mass);
-                az += gravity_acceleration(state.z[target_index], dist_squared, source_mass);
+                ax += gravity_acceleration(dx, dist_squared, source_mass);
+                ay += gravity_acceleration(dy, dist_squared, source_mass);
+                az += gravity_acceleration(dz, dist_squared, source_mass);
             }
 
-            self.ax[target_index] = ax;
-            self.ay[target_index] = ay;
-            self.az[target_index] = az;
+            self.acceleration.x[target_index] = ax;
+            self.acceleration.y[target_index] = ay;
+            self.acceleration.z[target_index] = az;
         }
     }
 }
@@ -79,9 +82,7 @@ impl ForceBuffer {
 ///
 /// The calculation is singular when `dist_squared` is zero; callers should
 /// prevent coincident source and target positions when appropriate.
-#[inline]
 pub fn gravity_acceleration(dimension_dist: f64, dist_squared: f64, attractor_mass: f64) -> f64 {
     // fvec = m1 avec = g m1 m2 / rmag^3 rvec
-
     -GRAVITY * attractor_mass * dimension_dist / (dist_squared * dist_squared.sqrt())
 }

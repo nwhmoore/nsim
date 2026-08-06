@@ -8,6 +8,7 @@
 use std::f64::consts::PI;
 
 use crate::{
+    diagnostics::Diagnostics,
     force::ForceBuffer,
     integration::leapfrog_timestep,
     output::{append_particle_timestep, create_particle_file},
@@ -19,6 +20,7 @@ mod force;
 mod integration;
 mod output;
 mod particle;
+mod utils;
 
 /// Gravitational constant in AU³ · year⁻² · solar-mass⁻¹.
 ///
@@ -26,7 +28,7 @@ mod particle;
 const GRAVITY: f64 = 4.0 * PI * PI;
 
 fn main() -> std::io::Result<()> {
-    // ---------------  INITIAL PARAMETERS -------------------
+    // ---------------------------  INITIAL PARAMETERS ------------------------
 
     // years
     let time_start = 0.0;
@@ -53,15 +55,20 @@ fn main() -> std::io::Result<()> {
         mass: None,
     });
 
-    // -----------------------------------------------------------
+    // ------------------------------------------------------------------------
 
+    let mut time = time_start;
+    let mut force_buffer = ForceBuffer::new(system.catalog.id.len());
+    let mut diagnostics = Diagnostics::default();
+
+    // --------------------- RECORD INITIAL STATE -----------------------------
     for particle_index in 0..system.catalog.name.len() {
         create_particle_file(&system, particle_index)?;
         append_particle_timestep(&system, particle_index, time_start)?;
     }
 
-    let mut time = time_start;
-    let mut force_buffer = ForceBuffer::new(system.catalog.id.len());
+    diagnostics.record(time, &system.state);
+    // ------------------------------------------------------------------------
 
     while time <= time_end {
         leapfrog_timestep(&mut system.state, &mut force_buffer, time_step);
@@ -71,6 +78,8 @@ fn main() -> std::io::Result<()> {
         for particle_index in 0..system.catalog.name.len() {
             append_particle_timestep(&system, particle_index, time)?;
         }
+
+        diagnostics.record(time, &system.state);
     }
 
     Ok(())
