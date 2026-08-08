@@ -79,7 +79,7 @@ impl ForceBuffer {
     /// Newtonian force and potential and should be prevented by the caller.
     #[must_use]
     pub fn compute_accelerations(&mut self, state: &ParticleState) -> ForceEvaluation {
-        // todo: preallocate these vecs
+        // Reuse the preallocated classification buffers for this evaluation.
         self.fill_alive_particle_groups(state);
 
         for &particle_idx in self
@@ -124,8 +124,9 @@ impl ForceBuffer {
             self.acceleration.z[first_idx] = self.accumulator.z[first_idx].total();
         }
 
-        // massless particle interactions
-        // TODO: apply the same acceleration scale from attractor approach here.
+        // Massless particle interactions. These particles receive acceleration
+        // from massive particles but do not alter massive-particle forces or
+        // contribute to the returned potential energy.
         for &small_particle_idx in &self.active_massless {
             for &(large_particle_idx, attractor_mass) in &self.active_massive {
                 let dx =
@@ -177,9 +178,8 @@ impl ForceBuffer {
 
 /// Computes the Newtonian gravitational potential energy of one massive pair.
 ///
-/// `dist_squared` is the squared separation of the bodies. The caller is
-/// responsible for supplying nonzero separation and for counting each pair
-/// only once.
+/// `dist` is the separation of the bodies. The caller is responsible for
+/// supplying nonzero separation and for counting each pair only once.
 #[must_use]
 pub fn gravity_potential(first_mass: f64, second_mass: f64, dist: f64) -> f64 {
     -GRAVITY * first_mass * second_mass / dist

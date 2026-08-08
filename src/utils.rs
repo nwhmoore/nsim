@@ -17,8 +17,8 @@ pub struct VectorSeries {
 /// Accumulates a sum while tracking the rounding error introduced by `f64`
 /// addition.
 ///
-/// Compensated summation is useful for diagnostics whose terms can differ
-/// greatly in magnitude or partially cancel, such as momentum and potential
+/// Compensated summation is useful when terms can differ greatly in magnitude
+/// or partially cancel, such as force components, momentum, and potential
 /// energy.
 #[derive(Debug, Default)]
 pub struct KahanAccumulator {
@@ -41,6 +41,8 @@ impl KahanAccumulator {
         self.sum
     }
 
+    /// Resets the accumulated total and compensation error while retaining
+    /// the accumulator's storage.
     pub fn reset(&mut self) {
         self.sum = 0.0;
         self.correction = 0.0;

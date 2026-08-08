@@ -11,7 +11,9 @@ The simulator uses a structure-of-arrays layout:
 - `Particle` describes the initial properties of one particle.
 - `ParticleSystem` stores particle metadata in a `ParticleCatalog` and numerical
   values in a `ParticleState`.
-- `ForceBuffer` stores the Cartesian acceleration of every particle.
+- `ForceBuffer` stores the Cartesian acceleration of every particle and reuses
+  its accumulation and active-particle classification buffers between force
+  evaluations.
 - `leapfrog_timestep` advances the state by one fixed timestep.
 
 Particle indices are shared across the catalog, state, force buffer, and output
@@ -90,8 +92,12 @@ aₙ₊₁     = acceleration at position xₙ₊₁
 vₙ₊₁     = vₙ₊₁/₂ + aₙ₊₁ · Δt/2
 ```
 
-The implementation is in [`src/integration.rs`](src/integration.rs). The
-force calculation uses
+The implementation is in [`src/integration.rs`](src/integration.rs). The force
+calculation classifies active particles as massive or massless. It iterates each
+active massive pair once, applying equal-and-opposite pairwise accelerations,
+then computes acceleration for each active massless test particle from all
+active massive bodies. Massless particles do not contribute to massive-body
+forces or potential energy. The acceleration law is
 
 ```text
 a = -G · M · (x - x_source) / |x - x_source|³
@@ -99,8 +105,10 @@ a = -G · M · (x - x_source) / |x - x_source|³
 
 Self-interaction is skipped. The initial force evaluation populates the buffer;
 each timestep computes the acceleration at the new position and leaves that
-value cached for the next timestep. The same force evaluation also returns the
-pairwise gravitational potential energy used by the diagnostics.
+value cached for the next timestep. Inactive particles are not recomputed. The
+same force evaluation also returns the pairwise gravitational potential energy
+of the active massive bodies, with each pair counted once, for use by the
+diagnostics.
 
 ## Accuracy
 
