@@ -97,26 +97,6 @@ pub struct ParticleState {
     pub alive: Vec<bool>,
 }
 
-impl ParticleState {
-    pub fn alive_particle_groups(&self) -> (Vec<(usize, f64)>, Vec<usize>) {
-        let mut massive = Vec::with_capacity(self.alive.len());
-        let mut massless = Vec::with_capacity(self.alive.len());
-
-        for particle_idx in 0..self.alive.len() {
-            if !self.alive[particle_idx] {
-                continue;
-            }
-
-            if let Some(mass) = self.mass[particle_idx] {
-                massive.push((particle_idx, mass));
-            } else {
-                massless.push(particle_idx);
-            }
-        }
-        (massive, massless)
-    }
-}
-
 /// Initial metadata and state used to add one particle to a [`ParticleSystem`].
 pub struct Particle {
     /// Name of the particle, also used as the output filename stem.
