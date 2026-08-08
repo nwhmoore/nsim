@@ -40,4 +40,9 @@ impl KahanAccumulator {
     pub fn total(&self) -> f64 {
         self.sum
     }
+
+    pub fn reset(&mut self) {
+        self.sum = 0.0;
+        self.correction = 0.0;
+    }
 }
