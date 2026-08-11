@@ -70,29 +70,23 @@ pub fn append_particle_timestep(
     let catalog = system.catalog();
     let state = system.state();
     let name = catalog.get_particle_name(particle_index)?;
-    let position = (
-        state.positions().x.get(particle_index),
-        state.positions().y.get(particle_index),
-        state.positions().z.get(particle_index),
-    );
-    let velocity = (
-        state.velocities().x.get(particle_index),
-        state.velocities().y.get(particle_index),
-        state.velocities().z.get(particle_index),
-    );
 
-    let (Some(&x_pos), Some(&y_pos), Some(&z_pos)) = position else {
+    let position = state.positions().value_at(particle_index);
+    let velocity = state.velocities().value_at(particle_index);
+
+    let x_pos = position.x;
+    let y_pos = position.y;
+    let z_pos = position.z;
+    let vx = velocity.x;
+    let vy = velocity.y;
+    let vz = velocity.z;
+
+    if particle_index >= state.positions().len() || particle_index >= state.velocities().len() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            format!("position data is missing for particle index {particle_index}"),
+            format!("particle index {particle_index} is out of bounds"),
         ));
-    };
-    let (Some(&vx), Some(&vy), Some(&vz)) = velocity else {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            format!("velocity data is missing for particle index {particle_index}"),
-        ));
-    };
+    }
 
     let mut file = OpenOptions::new().append(true).open(output_path(name))?;
 
