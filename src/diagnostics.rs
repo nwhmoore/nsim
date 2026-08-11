@@ -6,7 +6,7 @@
 
 use crate::{
     particle::ParticleState,
-    utils::{KahanAccumulator, VectorSeries},
+    utils::{KahanAccumulator, Vector3Series},
 };
 
 /// Time series of global quantities derived from simulation states.
@@ -29,15 +29,15 @@ pub struct Diagnostics {
     pub total_energy: Vec<f64>,
 
     /// Total linear momentum, stored as parallel component series.
-    pub linear_momentum: VectorSeries,
+    pub linear_momentum: Vector3Series,
     /// Total angular momentum about the simulation origin, stored as parallel
     /// component series.
-    pub angular_momentum: VectorSeries,
+    pub angular_momentum: Vector3Series,
 
     /// Center-of-mass position of the active massive bodies.
-    pub center_of_mass_position: VectorSeries,
+    pub center_of_mass_position: Vector3Series,
     /// Center-of-mass velocity of the active massive bodies.
-    pub center_of_mass_velocity: VectorSeries,
+    pub center_of_mass_velocity: Vector3Series,
 }
 
 impl Diagnostics {
@@ -45,8 +45,9 @@ impl Diagnostics {
     ///
     /// `potential_energy` must have been evaluated for the same positions in
     /// `state`. It is supplied by the force model so that diagnostics do not
-    /// duplicate the force-law calculation. The center-of-mass values are
-    /// undefined if `state` contains no active massive bodies.
+    /// duplicate the force-law calculation. If `state` contains no active
+    /// massive bodies, the total mass is zero and the center-of-mass values are
+    /// computed as division-by-zero results (typically `NaN` or `Inf`).
     pub fn record(&mut self, time: f64, state: &ParticleState, potential_energy: f64) {
         self.time.push(time);
 
@@ -66,7 +67,7 @@ impl Diagnostics {
         let mut mass_position_y = KahanAccumulator::default();
         let mut mass_position_z = KahanAccumulator::default();
 
-        for particle_index in 0..state.mass.len() {
+        for particle_index in 0..state.alive.len() {
             if let Some(mass) = state.mass[particle_index]
                 && state.alive[particle_index]
             {

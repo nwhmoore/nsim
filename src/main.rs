@@ -9,10 +9,11 @@ use std::f64::consts::PI;
 
 use crate::{
     diagnostics::Diagnostics,
-    force::ForceBuffer,
+    force::{ForceBuffer, gravity::GRAVITY},
     integration::leapfrog_timestep,
     output::{append_particle_timestep, create_particle_file, write_diagnostics_file},
     particle::{Particle, ParticleSystem},
+    utils::Vector3,
 };
 
 mod diagnostics;
@@ -21,11 +22,6 @@ mod integration;
 mod output;
 mod particle;
 mod utils;
-
-/// Gravitational constant in AU³ · year⁻² · solar-mass⁻¹.
-///
-/// The units of this constant set the units of the entire simulation.
-const GRAVITY: f64 = 4.0 * PI * PI;
 
 fn main() -> std::io::Result<()> {
     // ---------------------------  INITIAL PARAMETERS ------------------------
@@ -40,16 +36,32 @@ fn main() -> std::io::Result<()> {
     system.new_particle(Particle {
         name: String::from("Sol"),
         radius: 1.0,
-        pos: (0.0, 0.0, 0.0),
-        vel: (0.0, 0.0, 0.0),
+        pos: Vector3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        vel: Vector3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
         mass: Some(1.0),
     });
 
     system.new_particle(Particle {
         name: String::from("Jupiter"),
         radius: 1.0,
-        pos: (5.0, 0.0, 0.0),
-        vel: (0.0, f64::sqrt(GRAVITY / 5.0), 0.0),
+        pos: Vector3 {
+            x: 5.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        vel: Vector3 {
+            x: 0.0,
+            y: f64::sqrt(GRAVITY / 5.0),
+            z: 0.0,
+        },
         mass: None,
     });
 

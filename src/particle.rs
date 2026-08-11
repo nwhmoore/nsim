@@ -1,6 +1,6 @@
 //! Particles in the simulation.
 
-use crate::utils::VectorSeries;
+use crate::utils::{Vector3, Vector3Series};
 
 /// Collection of particles stored as catalog metadata and simulation state.
 ///
@@ -27,12 +27,12 @@ impl ParticleSystem {
             },
             state: ParticleState {
                 mass: Vec::new(),
-                position: VectorSeries {
+                position: Vector3Series {
                     x: Vec::new(),
                     y: Vec::new(),
                     z: Vec::new(),
                 },
-                velocity: VectorSeries {
+                velocity: Vector3Series {
                     x: Vec::new(),
                     y: Vec::new(),
                     z: Vec::new(),
@@ -56,13 +56,13 @@ impl ParticleSystem {
 
         self.state.mass.push(particle.mass);
 
-        self.state.position.x.push(particle.pos.0);
-        self.state.position.y.push(particle.pos.1);
-        self.state.position.z.push(particle.pos.2);
+        self.state.position.x.push(particle.pos.x);
+        self.state.position.y.push(particle.pos.y);
+        self.state.position.z.push(particle.pos.z);
 
-        self.state.velocity.x.push(particle.vel.0);
-        self.state.velocity.y.push(particle.vel.1);
-        self.state.velocity.z.push(particle.vel.2);
+        self.state.velocity.x.push(particle.vel.x);
+        self.state.velocity.y.push(particle.vel.y);
+        self.state.velocity.z.push(particle.vel.z);
 
         self.state.alive.push(true);
     }
@@ -88,10 +88,10 @@ pub struct ParticleState {
     pub mass: Vec<Option<f64>>,
 
     /// Cartesian positions.
-    pub position: VectorSeries,
+    pub position: Vector3Series,
 
     /// Cartesian velocities.
-    pub velocity: VectorSeries,
+    pub velocity: Vector3Series,
 
     /// Whether each particle is active in the system.
     pub alive: Vec<bool>,
@@ -104,9 +104,9 @@ pub struct Particle {
     /// Radius of the particle.
     pub radius: f64,
     /// Initial position `(x, y, z)`.
-    pub pos: (f64, f64, f64),
+    pub pos: Vector3,
     /// Initial velocity `(u, v, w)`.
-    pub vel: (f64, f64, f64),
+    pub vel: Vector3,
     /// Mass, or `None` for a massless test particle.
     pub mass: Option<f64>,
 }
