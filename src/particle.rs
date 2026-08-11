@@ -24,18 +24,22 @@ impl ParticleSystem {
         ParticleSystem::default()
     }
 
+    /// Returns the stable catalog metadata for the particles in this system.
     pub fn catalog(&self) -> &ParticleCatalog {
         &self.catalog
     }
 
+    /// Returns a view of the simulation state for this particle system.
     pub fn state(&self) -> &ParticleState {
         &self.state
     }
 
+    /// Returns the mutable simulation state for this particle system.
     pub fn state_mut(&mut self) -> &mut ParticleState {
         &mut self.state
     }
 
+    /// Returns the number of particles currently stored in the system.
     pub fn particle_count(&self) -> usize {
         self.catalog.id.len()
     }
@@ -82,6 +86,8 @@ pub struct ParticleCatalog {
 }
 
 impl ParticleCatalog {
+    /// Returns the stored name for a particle index, or an I/O error if the
+    /// index is out of bounds.
     pub fn get_particle_name(&self, particle_index: usize) -> std::io::Result<&str> {
         self.name
             .get(particle_index)
@@ -114,30 +120,38 @@ pub struct ParticleState {
 }
 
 impl ParticleState {
+    /// Returns the number of particles currently represented in the state.
     pub fn particle_count(&self) -> usize {
         self.alive_statuses.len()
     }
 
+    /// Returns the per-particle mass values, including `None` for massless test
+    /// particles.
     pub fn masses(&self) -> &[Option<f64>] {
         &self.masses
     }
 
+    /// Returns the position series for all particles.
     pub fn positions(&self) -> &Vector3Series {
         &self.positions
     }
 
+    /// Returns the mutable position series for all particles.
     pub fn positions_mut(&mut self) -> &mut Vector3Series {
         &mut self.positions
     }
 
+    /// Returns the velocity series for all particles.
     pub fn velocities(&self) -> &Vector3Series {
         &self.velocities
     }
 
+    /// Returns the mutable velocity series for all particles.
     pub fn velocities_mut(&mut self) -> &mut Vector3Series {
         &mut self.velocities
     }
 
+    /// Returns the per-particle active/inactive flags.
     pub fn alive_statuses(&self) -> &[bool] {
         &self.alive_statuses
     }

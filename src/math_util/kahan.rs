@@ -43,12 +43,15 @@ pub struct Kahan3 {
 }
 
 impl Kahan3 {
+    /// Adds one vector-valued sample to the compensated total in each axis.
     pub fn add(&mut self, value: &Vector3) {
         self.x.add(value.x);
         self.y.add(value.y);
         self.z.add(value.z);
     }
 
+    /// Returns the compensated total for the X, Y, and Z components.
+    #[must_use]
     pub fn total(&self) -> Vector3 {
         Vector3 {
             x: self.x.total(),
@@ -70,33 +73,33 @@ pub struct Kahan3Series {
 }
 
 impl Kahan3Series {
-    /// Creates an accumulator with one compensated total per particle.
-    pub fn new(number_particles: usize) -> Self {
+    /// Creates an accumulator with one compensated total per `capacity`.
+    pub fn new(capacity: usize) -> Self {
         Self {
-            x: (0..number_particles)
+            x: (0..capacity)
                 .map(|_| KahanAccumulator::default())
                 .collect(),
-            y: (0..number_particles)
+            y: (0..capacity)
                 .map(|_| KahanAccumulator::default())
                 .collect(),
-            z: (0..number_particles)
+            z: (0..capacity)
                 .map(|_| KahanAccumulator::default())
                 .collect(),
         }
     }
 
-    /// Adds one acceleration contribution to the stored total for a particle.
-    pub fn add(&mut self, particle_idx: usize, acceleration: &Vector3) {
-        self.x[particle_idx].add(acceleration.x);
-        self.y[particle_idx].add(acceleration.y);
-        self.z[particle_idx].add(acceleration.z);
+    pub fn add(&mut self, idx: usize, vector: &Vector3) {
+        self.x[idx].add(vector.x);
+        self.y[idx].add(vector.y);
+        self.z[idx].add(vector.z);
     }
 
-    pub fn total(&self, particle_idx: usize) -> Vector3 {
+    #[must_use]
+    pub fn total(&self, idx: usize) -> Vector3 {
         Vector3 {
-            x: self.x[particle_idx].total(),
-            y: self.y[particle_idx].total(),
-            z: self.z[particle_idx].total(),
+            x: self.x[idx].total(),
+            y: self.y[idx].total(),
+            z: self.z[idx].total(),
         }
     }
 

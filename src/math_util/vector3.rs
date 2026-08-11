@@ -54,10 +54,12 @@ impl std::ops::Div<f64> for Vector3 {
 }
 
 impl Vector3 {
+    /// Returns the squared Euclidean norm of the vector.
     pub fn square(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    /// Returns the cross product of this vector with `rhs`.
     pub fn cross(&self, rhs: &Vector3) -> Vector3 {
         Vector3 {
             x: self.y * rhs.z - self.z * rhs.y,
@@ -82,7 +84,8 @@ pub struct Vector3Series {
 }
 
 impl Vector3Series {
-    pub fn new(length: usize) -> Self {
+    /// Creates a zero-filled series with one vector entry per index.
+    pub fn new_zeros(length: usize) -> Self {
         Vector3Series {
             x: vec![0.0; length],
             y: vec![0.0; length],
@@ -90,6 +93,7 @@ impl Vector3Series {
         }
     }
 
+    /// Returns the vector stored at `idx`.
     pub fn value_at(&self, idx: usize) -> Vector3 {
         Vector3 {
             x: self.x[idx],
@@ -98,12 +102,14 @@ impl Vector3Series {
         }
     }
 
+    /// Stores `value` at the given index.
     pub fn set_value_at(&mut self, idx: usize, value: Vector3) {
         self.x[idx] = value.x;
         self.y[idx] = value.y;
         self.z[idx] = value.z;
     }
 
+    /// Returns the number of stored vectors in the series.
     pub fn len(&self) -> usize {
         debug_assert_eq!(self.x.len(), self.y.len());
         debug_assert_eq!(self.x.len(), self.z.len());
@@ -111,6 +117,7 @@ impl Vector3Series {
         self.x.len()
     }
 
+    /// Appends one vector value to the end of the series.
     pub fn push(&mut self, vector3: &Vector3) {
         self.x.push(vector3.x);
         self.y.push(vector3.y);

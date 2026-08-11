@@ -31,13 +31,14 @@ impl ForceBuffer {
     /// Creates a zeroed acceleration buffer for `number_particles` particles.
     pub fn new(number_particles: usize) -> Self {
         ForceBuffer {
-            accelerations: Vector3Series::new(number_particles),
+            accelerations: Vector3Series::new_zeros(number_particles),
             accumulator: Kahan3Series::new(number_particles),
             active_massive: Vec::with_capacity(number_particles),
             active_massless: Vec::with_capacity(number_particles),
         }
     }
 
+    /// Returns the per-particle acceleration vectors stored by the buffer.
     pub fn accelerations(&self) -> &Vector3Series {
         &self.accelerations
     }
