@@ -1,18 +1,16 @@
 //! Acceleration calculation and reusable storage.
 
 use crate::{
-    force::gravity::{
-        GRAVITY, gravitational_potential_energy, gravity_acceleration,
-    }, particle::ParticleState, utils::{Geometry, KahanAccumulator, Vector3, Vector3Series},
+    force::gravity::{GRAVITY, gravitational_potential_energy, gravity_acceleration},
+    math_util::{
+        Geometry,
+        kahan::{Kahan3Series, KahanAccumulator},
+        vector3::Vector3Series,
+    },
+    particle::ParticleState,
 };
 
 pub mod gravity;
-
-/// Quantities calculated alongside one gravitational force evaluation.
-pub struct ForceEvaluation {
-    /// Gravitational potential energy of the active massive bodies.
-    pub potential_energy: f64,
-}
 
 /// Per-particle acceleration components used by the integrator.
 ///
@@ -23,60 +21,25 @@ pub struct ForceBuffer {
     ///
     /// The component vectors are aligned with the particle indices in the
     /// [`ParticleState`] used for the most recent evaluation.
-    pub acceleration: Vector3Series,
-    accumulator: AccelerationAccumulator,
+    accelerations: Vector3Series,
+    accumulator: Kahan3Series,
     active_massive: Vec<(usize, f64)>,
     active_massless: Vec<usize>,
-}
-
-/// Per-particle Kahan-compensated acceleration totals used during one force
-/// evaluation.
-struct AccelerationAccumulator {
-    /// Accumulated X-component accelerations for each particle.
-    x: Vec<KahanAccumulator>,
-    /// Accumulated Y-component accelerations for each particle.
-    y: Vec<KahanAccumulator>,
-    /// Accumulated Z-component accelerations for each particle.
-    z: Vec<KahanAccumulator>,
-}
-
-impl AccelerationAccumulator {
-    /// Creates an accumulator with one compensated total per particle.
-    fn new(number_particles: usize) -> Self {
-        Self {
-            x: (0..number_particles)
-                .map(|_| KahanAccumulator::default())
-                .collect(),
-            y: (0..number_particles)
-                .map(|_| KahanAccumulator::default())
-                .collect(),
-            z: (0..number_particles)
-                .map(|_| KahanAccumulator::default())
-                .collect(),
-        }
-    }
-
-    /// Adds one acceleration contribution to the stored total for a particle.
-    fn add(&mut self, particle_idx: usize, acceleration: &Vector3) {
-        self.x[particle_idx].add(acceleration.x);
-        self.y[particle_idx].add(acceleration.y);
-        self.z[particle_idx].add(acceleration.z);
-    }
 }
 
 impl ForceBuffer {
     /// Creates a zeroed acceleration buffer for `number_particles` particles.
     pub fn new(number_particles: usize) -> Self {
         ForceBuffer {
-            acceleration: Vector3Series {
-                x: vec![0.0; number_particles],
-                y: vec![0.0; number_particles],
-                z: vec![0.0; number_particles],
-            },
-            accumulator: AccelerationAccumulator::new(number_particles),
+            accelerations: Vector3Series::new(number_particles),
+            accumulator: Kahan3Series::new(number_particles),
             active_massive: Vec::with_capacity(number_particles),
             active_massless: Vec::with_capacity(number_particles),
         }
+    }
+
+    pub fn accelerations(&self) -> &Vector3Series {
+        &self.accelerations
     }
 
     /// Recomputes and stores the acceleration of every active particle.
@@ -102,9 +65,7 @@ impl ForceBuffer {
             .map(|(particle_idx, _)| particle_idx)
             .chain(self.active_massless.iter())
         {
-            self.accumulator.x[particle_idx].reset();
-            self.accumulator.y[particle_idx].reset();
-            self.accumulator.z[particle_idx].reset();
+            self.accumulator.reset_at(particle_idx);
         }
 
         // Pairwise forces
@@ -112,11 +73,9 @@ impl ForceBuffer {
 
         for (i, &(first_idx, first_mass)) in self.active_massive.iter().enumerate() {
             for &(second_idx, second_mass) in &self.active_massive[i + 1..] {
-                let geometry = Geometry::calculate_geometry(Vector3 {
-                    x: state.position.x[first_idx] - state.position.x[second_idx],
-                    y: state.position.y[first_idx] - state.position.y[second_idx],
-                    z: state.position.z[first_idx] - state.position.z[second_idx],
-                });
+                let geometry = Geometry::calculate_geometry(
+                    state.positions().value_at(first_idx) - state.positions().value_at(second_idx),
+                );
 
                 // Gravity
                 let scale = -GRAVITY * geometry.inv_dist_cubed;
@@ -132,33 +91,31 @@ impl ForceBuffer {
                 ));
             }
 
-            self.acceleration.x[first_idx] = self.accumulator.x[first_idx].total();
-            self.acceleration.y[first_idx] = self.accumulator.y[first_idx].total();
-            self.acceleration.z[first_idx] = self.accumulator.z[first_idx].total();
+            self.accelerations
+                .set_value_at(first_idx, self.accumulator.total(first_idx));
         }
 
         // One-way interactions for massless particles
         for &small_particle_idx in &self.active_massless {
             for &(large_particle_idx, attractor_mass) in &self.active_massive {
                 // Geometry
-                let geometry = Geometry::calculate_geometry(Vector3 {
-                    x: state.position.x[small_particle_idx] - state.position.x[large_particle_idx],
-                    y: state.position.y[small_particle_idx] - state.position.y[large_particle_idx],
-                    z: state.position.z[small_particle_idx] - state.position.z[large_particle_idx],
-                });
+                let geometry = Geometry::calculate_geometry(
+                    state.positions().value_at(small_particle_idx)
+                        - state.positions().value_at(large_particle_idx),
+                );
 
                 // Gravity
                 let scale = -GRAVITY * geometry.inv_dist_cubed;
-                let gravity_acceleration = gravity_acceleration(attractor_mass, &geometry.r_vec, scale);
+                let gravity_acceleration =
+                    gravity_acceleration(attractor_mass, &geometry.r_vec, scale);
                 self.accumulator
                     .add(small_particle_idx, &gravity_acceleration);
             }
-            self.acceleration.x[small_particle_idx] =
-                self.accumulator.x[small_particle_idx].total();
-            self.acceleration.y[small_particle_idx] =
-                self.accumulator.y[small_particle_idx].total();
-            self.acceleration.z[small_particle_idx] =
-                self.accumulator.z[small_particle_idx].total();
+
+            self.accelerations.set_value_at(
+                small_particle_idx,
+                self.accumulator.total(small_particle_idx),
+            );
         }
 
         ForceEvaluation {
@@ -172,16 +129,22 @@ impl ForceBuffer {
         self.active_massive.clear();
         self.active_massless.clear();
 
-        for particle_idx in 0..state.alive.len() {
-            if !state.alive[particle_idx] {
+        for particle_idx in 0..state.particle_count() {
+            if !state.alive_statuses()[particle_idx] {
                 continue;
             }
 
-            if let Some(mass) = state.mass[particle_idx] {
+            if let Some(mass) = state.masses()[particle_idx] {
                 self.active_massive.push((particle_idx, mass));
             } else {
                 self.active_massless.push(particle_idx);
             }
         }
     }
+}
+
+/// Quantities calculated alongside one force evaluation.
+pub struct ForceEvaluation {
+    /// Gravitational potential energy of the active massive bodies.
+    pub potential_energy: f64,
 }

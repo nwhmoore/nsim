@@ -1,12 +1,15 @@
-//! Whole-system diagnostics recorded as structure-of-arrays time series.
+//! Whole-system self recorded as structure-of-arrays time series.
 //!
 //! Global quantities include only active particles with a `Some` mass value.
 //! Massless test particles are intentionally excluded from total mass,
 //! kinetic energy, momentum, angular momentum, and center-of-mass quantities.
 
 use crate::{
+    math_util::{
+        kahan::{Kahan3, KahanAccumulator},
+        vector3::Vector3Series,
+    },
     particle::ParticleState,
-    utils::{KahanAccumulator, Vector3Series},
 };
 
 /// Time series of global quantities derived from simulation states.
@@ -16,35 +19,39 @@ use crate::{
 #[derive(Default)]
 pub struct Diagnostics {
     /// Simulation time associated with each diagnostic sample.
-    pub time: Vec<f64>,
+    time: Vec<f64>,
 
     /// Total mass of active massive bodies.
-    pub total_mass: Vec<f64>,
+    total_mass: Vec<f64>,
 
     /// Total kinetic energy of active massive bodies.
-    pub kinetic_energy: Vec<f64>,
+    kinetic_energy: Vec<f64>,
     /// Pairwise Newtonian gravitational potential energy.
-    pub grav_potential_energy: Vec<f64>,
+    grav_potential_energy: Vec<f64>,
     /// Sum of kinetic and gravitational potential energy.
-    pub total_energy: Vec<f64>,
+    total_energy: Vec<f64>,
 
     /// Total linear momentum, stored as parallel component series.
-    pub linear_momentum: Vector3Series,
+    linear_momentum: Vector3Series,
     /// Total angular momentum about the simulation origin, stored as parallel
     /// component series.
-    pub angular_momentum: Vector3Series,
+    angular_momentum: Vector3Series,
 
     /// Center-of-mass position of the active massive bodies.
-    pub center_of_mass_position: Vector3Series,
+    center_of_mass_position: Vector3Series,
     /// Center-of-mass velocity of the active massive bodies.
-    pub center_of_mass_velocity: Vector3Series,
+    center_of_mass_velocity: Vector3Series,
 }
 
 impl Diagnostics {
+    pub fn number_samples(&self) -> usize {
+        self.time.len()
+    }
+
     /// Records one diagnostic sample for a simulation state.
     ///
     /// `potential_energy` must have been evaluated for the same positions in
-    /// `state`. It is supplied by the force model so that diagnostics do not
+    /// `state`. It is supplied by the force model so that self do not
     /// duplicate the force-law calculation. If `state` contains no active
     /// massive bodies, the total mass is zero and the center-of-mass values are
     /// computed as division-by-zero results (typically `NaN` or `Inf`).
@@ -55,86 +62,136 @@ impl Diagnostics {
 
         let mut kinetic_energy = KahanAccumulator::default();
 
-        let mut momentum_x = KahanAccumulator::default();
-        let mut momentum_y = KahanAccumulator::default();
-        let mut momentum_z = KahanAccumulator::default();
+        let mut momentum = Kahan3::default();
 
-        let mut angular_momentum_x = KahanAccumulator::default();
-        let mut angular_momentum_y = KahanAccumulator::default();
-        let mut angular_momentum_z = KahanAccumulator::default();
+        let mut angular_momentum = Kahan3::default();
 
-        let mut mass_position_x = KahanAccumulator::default();
-        let mut mass_position_y = KahanAccumulator::default();
-        let mut mass_position_z = KahanAccumulator::default();
+        let mut mass_position = Kahan3::default();
 
-        for particle_index in 0..state.alive.len() {
-            if let Some(mass) = state.mass[particle_index]
-                && state.alive[particle_index]
+        for particle_index in 0..state.particle_count() {
+            if let Some(mass) = state.masses()[particle_index]
+                && state.alive_statuses()[particle_index]
             {
-                let x = state.position.x[particle_index];
-                let y = state.position.y[particle_index];
-                let z = state.position.z[particle_index];
-
-                let vx = state.velocity.x[particle_index];
-                let vy = state.velocity.y[particle_index];
-                let vz = state.velocity.z[particle_index];
+                let position = state.positions().value_at(particle_index);
+                let velocity = state.velocities().value_at(particle_index);
 
                 total_mass.add(mass);
-                kinetic_energy.add(0.5 * mass * (vx * vx + vy * vy + vz * vz));
+                kinetic_energy.add(0.5 * mass * (velocity.square()));
 
-                momentum_x.add(mass * vx);
-                momentum_y.add(mass * vy);
-                momentum_z.add(mass * vz);
+                momentum.add(&(velocity * mass));
 
-                angular_momentum_x.add(mass * (y * vz - z * vy));
-                angular_momentum_y.add(mass * (z * vx - x * vz));
-                angular_momentum_z.add(mass * (x * vy - y * vx));
+                angular_momentum.add(&(position.cross(&velocity) * mass));
 
-                mass_position_x.add(mass * x);
-                mass_position_y.add(mass * y);
-                mass_position_z.add(mass * z);
+                mass_position.add(&(position * mass));
             }
         }
 
-        let mass = total_mass.total();
-        self.total_mass.push(mass);
+        let all_mass = total_mass.total();
+        self.total_mass.push(all_mass);
 
         let kinetic_energy = kinetic_energy.total();
         self.kinetic_energy.push(kinetic_energy);
         self.grav_potential_energy.push(potential_energy);
         self.total_energy.push(kinetic_energy + potential_energy);
 
-        let total_linear_momentum_x = momentum_x.total();
-        let total_linear_momentum_y = momentum_y.total();
-        let total_linear_momentum_z = momentum_z.total();
+        let total_linear_momentum = momentum.total();
+        self.linear_momentum.push(&momentum.total());
 
-        self.linear_momentum.x.push(total_linear_momentum_x);
-        self.linear_momentum.y.push(total_linear_momentum_y);
-        self.linear_momentum.z.push(total_linear_momentum_z);
-
-        self.angular_momentum.x.push(angular_momentum_x.total());
-        self.angular_momentum.y.push(angular_momentum_y.total());
-        self.angular_momentum.z.push(angular_momentum_z.total());
+        self.angular_momentum.push(&angular_momentum.total());
 
         self.center_of_mass_position
-            .x
-            .push(mass_position_x.total() / mass);
-        self.center_of_mass_position
-            .y
-            .push(mass_position_y.total() / mass);
-        self.center_of_mass_position
-            .z
-            .push(mass_position_z.total() / mass);
+            .push(&(mass_position.total() / all_mass));
 
         // v_cm = (sum_i m_i v_i) / (sum_i m_i) = P / M.
         self.center_of_mass_velocity
-            .x
-            .push(total_linear_momentum_x / mass);
-        self.center_of_mass_velocity
-            .y
-            .push(total_linear_momentum_y / mass);
-        self.center_of_mass_velocity
-            .z
-            .push(total_linear_momentum_z / mass);
+            .push(&(total_linear_momentum / all_mass));
+
+        debug_assert_eq!(self.number_samples(), self.total_mass.len());
+        debug_assert_eq!(self.number_samples(), self.kinetic_energy.len());
+        debug_assert_eq!(self.number_samples(), self.grav_potential_energy.len());
+        debug_assert_eq!(self.number_samples(), self.total_energy.len());
+        debug_assert_eq!(self.number_samples(), self.total_mass.len());
+        debug_assert_eq!(self.number_samples(), self.linear_momentum.len());
+        debug_assert_eq!(self.number_samples(), self.angular_momentum.len());
+        debug_assert_eq!(self.number_samples(), self.center_of_mass_position.len());
+        debug_assert_eq!(self.number_samples(), self.center_of_mass_velocity.len());
+    }
+
+    pub fn validate_diagnostics(&self) -> std::io::Result<usize> {
+        let sample_count = self.number_samples();
+        if sample_count == 0 {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "empty self record",
+            ));
+        }
+
+        for (name, series_len) in [
+            ("total_mass", self.total_mass.len()),
+            ("kinetic_energy", self.kinetic_energy.len()),
+            ("grav_potential_energy", self.grav_potential_energy.len()),
+            ("total_energy", self.total_energy.len()),
+            ("linear_momentum.x", self.linear_momentum.x.len()),
+            ("linear_momentum.y", self.linear_momentum.y.len()),
+            ("linear_momentum.z", self.linear_momentum.z.len()),
+            ("angular_momentum.x", self.angular_momentum.x.len()),
+            ("angular_momentum.y", self.angular_momentum.y.len()),
+            ("angular_momentum.z", self.angular_momentum.z.len()),
+            (
+                "center_of_mass_position.x",
+                self.center_of_mass_position.x.len(),
+            ),
+            (
+                "center_of_mass_position.y",
+                self.center_of_mass_position.y.len(),
+            ),
+            (
+                "center_of_mass_position.z",
+                self.center_of_mass_position.z.len(),
+            ),
+            (
+                "center_of_mass_velocity.x",
+                self.center_of_mass_velocity.x.len(),
+            ),
+            (
+                "center_of_mass_velocity.y",
+                self.center_of_mass_velocity.y.len(),
+            ),
+            (
+                "center_of_mass_velocity.z",
+                self.center_of_mass_velocity.z.len(),
+            ),
+        ] {
+            if series_len != sample_count {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    format!("self series {name} has {series_len} samples; expected {sample_count}"),
+                ));
+            }
+        }
+
+        Ok(sample_count)
+    }
+
+    pub fn diagnostics_values_at(&self, sample_index: usize) -> [f64; 17] {
+        [
+            self.time[sample_index],
+            self.total_mass[sample_index],
+            self.kinetic_energy[sample_index],
+            self.grav_potential_energy[sample_index],
+            self.total_energy[sample_index],
+            self.linear_momentum.x[sample_index],
+            self.linear_momentum.y[sample_index],
+            self.linear_momentum.z[sample_index],
+            self.angular_momentum.x[sample_index],
+            self.angular_momentum.y[sample_index],
+            self.angular_momentum.z[sample_index],
+            self.center_of_mass_position.x[sample_index],
+            self.center_of_mass_position.y[sample_index],
+            self.center_of_mass_position.z[sample_index],
+            self.center_of_mass_velocity.x[sample_index],
+            self.center_of_mass_velocity.y[sample_index],
+            self.center_of_mass_velocity.z[sample_index],
+        ]
     }
 }

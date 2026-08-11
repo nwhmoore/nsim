@@ -1,6 +1,6 @@
 //! Gravitational acceleration, potential-energy calculation
 
-use crate::utils::{Geometry, Vector3};
+use crate::math_util::{Geometry, vector3::Vector3};
 use std::f64::consts::PI;
 
 /// Gravitational constant in AU³ · year⁻² · solar-mass⁻¹.

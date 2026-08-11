@@ -11,17 +11,17 @@ use crate::{
     diagnostics::Diagnostics,
     force::{ForceBuffer, gravity::GRAVITY},
     integration::leapfrog_timestep,
+    math_util::vector3::Vector3,
     output::{append_particle_timestep, create_particle_file, write_diagnostics_file},
     particle::{Particle, ParticleSystem},
-    utils::Vector3,
 };
 
 mod diagnostics;
 mod force;
 mod integration;
+mod math_util;
 mod output;
 mod particle;
-mod utils;
 
 fn main() -> std::io::Result<()> {
     // ---------------------------  INITIAL PARAMETERS ------------------------
@@ -36,12 +36,12 @@ fn main() -> std::io::Result<()> {
     system.new_particle(Particle {
         name: String::from("Sol"),
         radius: 1.0,
-        pos: Vector3 {
+        position: Vector3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
         },
-        vel: Vector3 {
+        velocity: Vector3 {
             x: 0.0,
             y: 0.0,
             z: 0.0,
@@ -52,12 +52,12 @@ fn main() -> std::io::Result<()> {
     system.new_particle(Particle {
         name: String::from("Jupiter"),
         radius: 1.0,
-        pos: Vector3 {
+        position: Vector3 {
             x: 5.0,
             y: 0.0,
             z: 0.0,
         },
-        vel: Vector3 {
+        velocity: Vector3 {
             x: 0.0,
             y: f64::sqrt(GRAVITY / 5.0),
             z: 0.0,
@@ -68,29 +68,29 @@ fn main() -> std::io::Result<()> {
     // ------------------------------------------------------------------------
 
     let mut time = time_start;
-    let mut force_buffer = ForceBuffer::new(system.catalog.id.len());
+    let mut force_buffer = ForceBuffer::new(system.particle_count());
     let mut diagnostics = Diagnostics::default();
 
     // --------------------- RECORD INITIAL STATE -----------------------------
-    for particle_index in 0..system.catalog.name.len() {
+    for particle_index in 0..system.particle_count() {
         create_particle_file(&system, particle_index)?;
         append_particle_timestep(&system, particle_index, time_start)?;
     }
 
-    let initial_evaluation = force_buffer.compute_accelerations(&system.state);
-    diagnostics.record(time, &system.state, initial_evaluation.potential_energy);
+    let initial_evaluation = force_buffer.compute_accelerations(system.state());
+    diagnostics.record(time, system.state(), initial_evaluation.potential_energy);
     // ------------------------------------------------------------------------
 
     while time <= time_end {
-        let force_evaluation = leapfrog_timestep(&mut system.state, &mut force_buffer, time_step);
+        let force_evaluation = leapfrog_timestep(system.state_mut(), &mut force_buffer, time_step);
 
         time += time_step;
 
-        for particle_index in 0..system.catalog.name.len() {
+        for particle_index in 0..system.particle_count() {
             append_particle_timestep(&system, particle_index, time)?;
         }
 
-        diagnostics.record(time, &system.state, force_evaluation.potential_energy);
+        diagnostics.record(time, system.state(), force_evaluation.potential_energy);
     }
 
     write_diagnostics_file(&diagnostics)?;

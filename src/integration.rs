@@ -39,37 +39,36 @@ pub fn leapfrog_timestep(
     force_buffer: &mut ForceBuffer,
     fixed_dt: f64,
 ) -> ForceEvaluation {
-    for particle_index in 0..state.mass.len() {
-        if !state.alive[particle_index] {
+    for particle_index in 0..state.particle_count() {
+        if !state.alive_statuses()[particle_index] {
             continue;
         }
 
-        state.velocity.x[particle_index] +=
-            force_buffer.acceleration.x[particle_index] * 0.5 * fixed_dt;
-        state.position.x[particle_index] += state.velocity.x[particle_index] * fixed_dt;
+        let new_velocity = state.velocities().value_at(particle_index)
+            + force_buffer.accelerations().value_at(particle_index) * 0.5 * fixed_dt;
+        state
+            .velocities_mut()
+            .set_value_at(particle_index, new_velocity);
 
-        state.velocity.y[particle_index] +=
-            force_buffer.acceleration.y[particle_index] * 0.5 * fixed_dt;
-        state.position.y[particle_index] += state.velocity.y[particle_index] * fixed_dt;
-
-        state.velocity.z[particle_index] +=
-            force_buffer.acceleration.z[particle_index] * 0.5 * fixed_dt;
-        state.position.z[particle_index] += state.velocity.z[particle_index] * fixed_dt;
+        let new_position = state.positions().value_at(particle_index)
+            + state.velocities().value_at(particle_index) * fixed_dt;
+        state
+            .positions_mut()
+            .set_value_at(particle_index, new_position);
     }
 
     let force_evaluation = force_buffer.compute_accelerations(state);
 
-    for particle_index in 0..state.mass.len() {
-        if !state.alive[particle_index] {
+    for particle_index in 0..state.particle_count() {
+        if !state.alive_statuses()[particle_index] {
             continue;
         }
 
-        state.velocity.x[particle_index] +=
-            force_buffer.acceleration.x[particle_index] * 0.5 * fixed_dt;
-        state.velocity.y[particle_index] +=
-            force_buffer.acceleration.y[particle_index] * 0.5 * fixed_dt;
-        state.velocity.z[particle_index] +=
-            force_buffer.acceleration.z[particle_index] * 0.5 * fixed_dt;
+        let new_velocity = state.velocities().value_at(particle_index)
+            + force_buffer.accelerations().value_at(particle_index) * 0.5 * fixed_dt;
+        state
+            .velocities_mut()
+            .set_value_at(particle_index, new_velocity);
     }
 
     force_evaluation
