@@ -8,7 +8,7 @@ use crate::math_util::vector3::{Vector3, Vector3Series};
 /// remain aligned: a particle at index `i` has its name and metadata in the
 /// catalog's index `i` and its position, velocity, and mass in the state's
 /// index `i`.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ParticleSystem {
     /// Stable catalog metadata for every particle.
     catalog: ParticleCatalog,
@@ -75,7 +75,7 @@ impl ParticleSystem {
 /// Persistent metadata associated with each particle.
 ///
 /// Every vector is indexed by the same particle index.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ParticleCatalog {
     /// Stable numeric ID assigned when the particle is added.
     id: Vec<usize>,
@@ -104,7 +104,7 @@ impl ParticleCatalog {
 /// Time-varying numerical state stored for all particles.
 ///
 /// A mass of `None` marks a massless test particle.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ParticleState {
     /// Particle masses; `None` denotes a massless test particle.
     masses: Vec<Option<f64>>,

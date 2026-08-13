@@ -1,5 +1,5 @@
 /// Three Cartesian components of a vector.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vector3 {
     /// X component.
     pub x: f64,
@@ -73,7 +73,7 @@ impl Vector3 {
 ///
 /// The vectors are indexed in lockstep. Depending on the owner, an index may
 /// identify a particle or a recorded diagnostic sample.
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Vector3Series {
     /// X components.
     x: Vec<f64>,
@@ -117,10 +117,72 @@ impl Vector3Series {
         self.x.len()
     }
 
+    #[allow(unused)]
+    pub fn is_empty(&self) -> bool {
+        self.x.is_empty()
+    }
+
     /// Appends one vector value to the end of the series.
     pub fn push(&mut self, vector3: &Vector3) {
         self.x.push(vector3.x);
         self.y.push(vector3.y);
         self.z.push(vector3.z);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::math_util::vector3::Vector3;
+
+    static LHS: Vector3 = Vector3 {
+        x: 1.0,
+        y: 2.0,
+        z: 3.0,
+    };
+    static RHS: Vector3 = Vector3 {
+        x: 4.0,
+        y: 5.0,
+        z: 6.0,
+    };
+
+    #[test]
+    fn test_add() {
+        assert_eq!(
+            LHS + RHS,
+            Vector3 {
+                x: 5.0,
+                y: 7.0,
+                z: 9.0,
+            }
+        )
+    }
+
+    #[test]
+    fn test_sub() {
+        assert_eq!(
+            LHS - RHS,
+            Vector3 {
+                x: -3.0,
+                y: -3.0,
+                z: -3.0,
+            }
+        )
+    }
+
+    #[test]
+    fn test_square() {
+        assert_eq!(LHS.square(), 14.0)
+    }
+
+    #[test]
+    fn test_cross() {
+        assert_eq!(
+            LHS.cross(&RHS),
+            Vector3 {
+                x: -3.0,
+                y: 6.0,
+                z: -3.0,
+            }
+        )
     }
 }

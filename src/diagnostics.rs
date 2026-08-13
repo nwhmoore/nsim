@@ -48,6 +48,18 @@ impl Diagnostics {
         self.time.len()
     }
 
+    pub fn linear_momentum(&self) -> &Vector3Series {
+        &self.linear_momentum
+    }
+
+    pub fn angular_momentum(&self) -> &Vector3Series {
+        &self.angular_momentum
+    }
+
+    pub fn total_energy(&self) -> &[f64] {
+        &self.total_energy
+    }
+
     /// Records one diagnostic sample for a simulation state.
     ///
     /// `potential_energy` must have been evaluated for the same positions in

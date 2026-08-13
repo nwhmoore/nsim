@@ -7,7 +7,7 @@
 
 use std::f64::consts::PI;
 
-use crate::{
+use nsim::{
     diagnostics::Diagnostics,
     force::{ForceBuffer, gravity::GRAVITY},
     integration::leapfrog_timestep,
@@ -15,13 +15,6 @@ use crate::{
     output::{append_particle_timestep, create_particle_file, write_diagnostics_file},
     particle::{Particle, ParticleSystem},
 };
-
-mod diagnostics;
-mod force;
-mod integration;
-mod math_util;
-mod output;
-mod particle;
 
 fn main() -> std::io::Result<()> {
     // ---------------------------  INITIAL PARAMETERS ------------------------

@@ -81,7 +81,7 @@ impl ForceBuffer {
                 // Gravity
                 let scale = -GRAVITY * geometry.inv_dist_cubed;
                 let first_acceleration = gravity_acceleration(second_mass, &geometry.r_vec, scale);
-                let second_acceleration = gravity_acceleration(first_mass, &geometry.r_vec, scale);
+                let second_acceleration = gravity_acceleration(first_mass, &geometry.r_vec, -scale);
                 self.accumulator.add(first_idx, &first_acceleration);
                 self.accumulator.add(second_idx, &second_acceleration);
 
