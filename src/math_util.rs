@@ -8,11 +8,11 @@ pub mod vector3;
 /// Pairwise geometric data.
 pub struct Geometry {
     /// Relative displacement vector between two particles.
-    pub r_vec: Vector3,
+    r_vec: Vector3,
     /// Euclidean separation magnitude.
-    pub dist: f64,
+    dist: f64,
     /// Inverse cube of the separation magnitude.
-    pub inv_dist_cubed: f64,
+    inv_dist_cubed: f64,
 }
 
 impl Geometry {
@@ -27,5 +27,17 @@ impl Geometry {
             dist,
             inv_dist_cubed,
         }
+    }
+
+    pub fn r_vec(&self) -> &Vector3 {
+        &self.r_vec
+    }
+
+    pub fn dist(&self) -> &f64 {
+        &self.dist
+    }
+
+    pub fn inv_dist_cubed(&self) -> &f64 {
+        &self.inv_dist_cubed
     }
 }

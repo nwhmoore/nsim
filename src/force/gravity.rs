@@ -31,5 +31,5 @@ pub(super) fn gravitational_potential_energy(
     second_mass: f64,
     geometry: &Geometry,
 ) -> f64 {
-    -GRAVITY * first_mass * second_mass / geometry.dist
+    -GRAVITY * first_mass * second_mass / geometry.dist()
 }
