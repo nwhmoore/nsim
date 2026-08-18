@@ -6,7 +6,7 @@
 //! for the next timestep.
 
 use crate::{
-    force::{ForceDiagnostics, ForceSystem},
+    force::{AccelerationAccumulator, ForceDiagnostics, ForceSystem},
     particle::ParticleState,
 };
 
@@ -34,27 +34,29 @@ use crate::{
 ///
 /// This function may panic if the state and force-buffer component vectors do
 /// not have matching lengths.
-pub fn leapfrog_timestep(
+pub fn leapfrog_timestep<A>(
     state: &mut ParticleState,
-    forces: &mut ForceSystem,
+    forces: &mut ForceSystem<A>,
     fixed_dt: f64,
-) -> ForceDiagnostics {
+) -> ForceDiagnostics
+where
+    A: AccelerationAccumulator,
+{
     for particle_index in 0..state.particle_count() {
         if !state.alive_statuses()[particle_index] {
             continue;
         }
 
-        let new_velocity = state.velocities().value_at(particle_index)
-            + forces.buffer().accelerations().value_at(particle_index) * 0.5 * fixed_dt;
-        state
-            .velocities_mut()
-            .set_value_at(particle_index, new_velocity);
+        state.velocities_mut().x[particle_index] +=
+            forces.buffer().accelerations().x[particle_index] * 0.5 * fixed_dt;
+        state.velocities_mut().y[particle_index] +=
+            forces.buffer().accelerations().y[particle_index] * 0.5 * fixed_dt;
+        state.velocities_mut().z[particle_index] +=
+            forces.buffer().accelerations().z[particle_index] * 0.5 * fixed_dt;
 
-        let new_position = state.positions().value_at(particle_index)
-            + state.velocities().value_at(particle_index) * fixed_dt;
-        state
-            .positions_mut()
-            .set_value_at(particle_index, new_position);
+        state.positions_mut().x[particle_index] += state.velocities().x[particle_index] * fixed_dt;
+        state.positions_mut().y[particle_index] += state.velocities().y[particle_index] * fixed_dt;
+        state.positions_mut().z[particle_index] += state.velocities().z[particle_index] * fixed_dt;
     }
 
     let force_evaluation = forces.evaluate(state);
@@ -64,11 +66,12 @@ pub fn leapfrog_timestep(
             continue;
         }
 
-        let new_velocity = state.velocities().value_at(particle_index)
-            + forces.buffer().accelerations().value_at(particle_index) * 0.5 * fixed_dt;
-        state
-            .velocities_mut()
-            .set_value_at(particle_index, new_velocity);
+        state.velocities_mut().x[particle_index] +=
+            forces.buffer().accelerations().x[particle_index] * 0.5 * fixed_dt;
+        state.velocities_mut().y[particle_index] +=
+            forces.buffer().accelerations().y[particle_index] * 0.5 * fixed_dt;
+        state.velocities_mut().z[particle_index] +=
+            forces.buffer().accelerations().z[particle_index] * 0.5 * fixed_dt;
     }
 
     force_evaluation

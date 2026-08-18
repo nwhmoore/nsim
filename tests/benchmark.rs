@@ -1,16 +1,15 @@
 #![feature(test)]
 
 use nsim::{
-    force::{ForceSystem, NewtonianGravity},
+    force::{DirectAccumulator, ForceSystem, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::vector3::Vector3,
     particle::{Particle, ParticleSystem},
 };
 
-fn solar_system_40kyr() {
+fn solar_system(simulation_time: f64) {
     let mut system = ParticleSystem::new_system();
     let velocity_scale = 365.2425;
-    let simulation_time = 40_000.00;
 
     system.new_particle(Particle {
         name: String::from("Sol"),
@@ -95,7 +94,7 @@ fn solar_system_40kyr() {
     let dt = 0.593; // 5% of jup period
     let steps = (simulation_time / dt) as usize;
 
-    let mut forces = ForceSystem::new(system.particle_count());
+    let mut forces = ForceSystem::<DirectAccumulator>::new(system.particle_count());
     forces.add_pairwise_force(NewtonianGravity);
     let _ = forces.evaluate(system.state());
 
@@ -106,11 +105,14 @@ fn solar_system_40kyr() {
 
 mod bench {
     extern crate test;
-    use crate::solar_system_40kyr;
+    use crate::solar_system;
     use test::Bencher;
 
+    /// Length of simulation (currently in years, set by G)
+    const SIMULATION_TIME: f64 = 4e4;
+
     #[bench]
-    fn bench_ss_40kyr(b: &mut Bencher) {
-        b.iter(solar_system_40kyr)
+    fn bench_solar_system(b: &mut Bencher) {
+        b.iter(|| solar_system(SIMULATION_TIME))
     }
 }

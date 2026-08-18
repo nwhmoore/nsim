@@ -71,15 +71,12 @@ pub fn append_particle_timestep(
     let state = system.state();
     let name = catalog.get_particle_name(particle_index)?;
 
-    let position = state.positions().value_at(particle_index);
-    let velocity = state.velocities().value_at(particle_index);
-
-    let x_pos = position.x;
-    let y_pos = position.y;
-    let z_pos = position.z;
-    let vx = velocity.x;
-    let vy = velocity.y;
-    let vz = velocity.z;
+    let x_pos = state.positions().x[particle_index];
+    let y_pos = state.positions().y[particle_index];
+    let z_pos = state.positions().z[particle_index];
+    let vx = state.velocities().x[particle_index];
+    let vy = state.velocities().y[particle_index];
+    let vz = state.velocities().z[particle_index];
 
     if particle_index >= state.positions().len() || particle_index >= state.velocities().len() {
         return Err(std::io::Error::new(

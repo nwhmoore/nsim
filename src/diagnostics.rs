@@ -7,7 +7,7 @@
 use crate::{
     math_util::{
         kahan::{Kahan3, KahanAccumulator},
-        vector3::Vector3Series,
+        vector3::{Vector3, Vector3Series},
     },
     particle::ParticleState,
 };
@@ -82,8 +82,16 @@ impl Diagnostics {
 
         for particle_index in 0..state.particle_count() {
             if state.alive_statuses()[particle_index] {
-                let position = state.positions().value_at(particle_index);
-                let velocity = state.velocities().value_at(particle_index);
+                let position = Vector3 {
+                    x: state.positions().x[particle_index],
+                    y: state.positions().y[particle_index],
+                    z: state.positions().z[particle_index],
+                };
+                let velocity = Vector3 {
+                    x: state.velocities().x[particle_index],
+                    y: state.velocities().y[particle_index],
+                    z: state.velocities().z[particle_index],
+                };
                 let mass = state.masses()[particle_index];
 
                 total_mass.add(mass);
@@ -171,18 +179,18 @@ impl Diagnostics {
             self.kinetic_energy[sample_index],
             self.grav_potential_energy[sample_index],
             self.total_energy[sample_index],
-            self.linear_momentum.value_at(sample_index).x,
-            self.linear_momentum.value_at(sample_index).y,
-            self.linear_momentum.value_at(sample_index).z,
-            self.angular_momentum.value_at(sample_index).x,
-            self.angular_momentum.value_at(sample_index).y,
-            self.angular_momentum.value_at(sample_index).z,
-            self.center_of_mass_position.value_at(sample_index).x,
-            self.center_of_mass_position.value_at(sample_index).y,
-            self.center_of_mass_position.value_at(sample_index).z,
-            self.center_of_mass_velocity.value_at(sample_index).x,
-            self.center_of_mass_velocity.value_at(sample_index).y,
-            self.center_of_mass_velocity.value_at(sample_index).z,
+            self.linear_momentum.x[sample_index],
+            self.linear_momentum.y[sample_index],
+            self.linear_momentum.z[sample_index],
+            self.angular_momentum.x[sample_index],
+            self.angular_momentum.y[sample_index],
+            self.angular_momentum.z[sample_index],
+            self.center_of_mass_position.x[sample_index],
+            self.center_of_mass_position.y[sample_index],
+            self.center_of_mass_position.z[sample_index],
+            self.center_of_mass_velocity.x[sample_index],
+            self.center_of_mass_velocity.y[sample_index],
+            self.center_of_mass_velocity.z[sample_index],
         ]
     }
 }

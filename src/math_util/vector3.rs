@@ -94,19 +94,15 @@ impl Vector3Series {
     }
 
     /// Returns the vector stored at `idx`.
+    /// 
+    /// This creates an entirely new structure, DO NOT USE IN FORCE EVALUATION
+    /// OR INTEGRATION. For diagnostic and testing API only.
     pub fn value_at(&self, idx: usize) -> Vector3 {
         Vector3 {
             x: self.x[idx],
             y: self.y[idx],
             z: self.z[idx],
         }
-    }
-
-    /// Stores `value` at the given index.
-    pub fn set_value_at(&mut self, idx: usize, value: Vector3) {
-        self.x[idx] = value.x;
-        self.y[idx] = value.y;
-        self.z[idx] = value.z;
     }
 
     /// Returns the number of stored vectors in the series.

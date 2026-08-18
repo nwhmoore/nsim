@@ -47,9 +47,11 @@ impl<A: AccelerationAccumulator> ForceSystem<A> {
             }
 
             for second_idx in (first_idx + 1)..state.particle_count() {
-                let geometry = Geometry::calculate_geometry(
-                    state.positions().value_at(first_idx) - state.positions().value_at(second_idx),
-                );
+                let geometry = Geometry::calculate_geometry(Vector3 {
+                    x: state.positions().x[first_idx] - state.positions().x[second_idx],
+                    y: state.positions().y[first_idx] - state.positions().y[second_idx],
+                    z: state.positions().z[first_idx] - state.positions().z[second_idx],
+                });
 
                 for force in self.pairwise.iter() {
                     let contribution = force.evaluate_pair(state, first_idx, second_idx, &geometry);
@@ -160,9 +162,9 @@ impl AccelerationAccumulator for CompensatedAccumulator {
 
     fn finish(&mut self, buffer: &mut ForceBuffer) {
         for idx in 0..self.accumulator.len() {
-            buffer
-                .accelerations
-                .set_value_at(idx, self.accumulator.total(idx));
+            buffer.accelerations.x[idx] = self.accumulator.total(idx).x;
+            buffer.accelerations.y[idx] = self.accumulator.total(idx).y;
+            buffer.accelerations.z[idx] = self.accumulator.total(idx).z;
         }
     }
 }

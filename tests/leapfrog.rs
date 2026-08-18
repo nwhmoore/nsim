@@ -62,7 +62,7 @@ fn leapfrog_convergence() {
     for this_time_step in all_time_steps {
         let mut this_system = initial_system.clone();
 
-        let mut forces = ForceSystem::new(this_system.particle_count());
+        let mut forces: ForceSystem = ForceSystem::new(this_system.particle_count());
         forces.add_pairwise_force(NewtonianGravity);
         let _initial_computation = forces.evaluate(this_system.state());
 
@@ -71,15 +71,13 @@ fn leapfrog_convergence() {
             let _ = leapfrog_timestep(this_system.state_mut(), &mut forces, this_time_step);
         }
 
-        let error_geometry = Geometry::calculate_geometry(
-            Vector3 {
-                x: 5.0,
-                y: 0.0,
-                z: 0.0,
-            } - this_system.state().positions().value_at(1),
-        );
+        let error_geometry = Geometry::calculate_geometry(Vector3 {
+            x: 5.0 - this_system.state().positions().x[1],
+            y: 0.0 - this_system.state().positions().y[1],
+            z: 0.0 - this_system.state().positions().z[1],
+        });
         let error = error_geometry.dist().abs();
-        println!("error: {error:e}");
+        // println!("error: {error:e}");
         errors.push(error);
     }
 

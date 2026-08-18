@@ -66,7 +66,7 @@ fn two_body_conservation() {
     // ------------------------------------------------------------------------
 
     let mut time = time_start;
-    let mut forces = ForceSystem::new(system.particle_count());
+    let mut forces: ForceSystem = ForceSystem::new(system.particle_count());
     forces.add_pairwise_force(NewtonianGravity);
     let mut diagnostics = Diagnostics::default();
 
@@ -195,7 +195,7 @@ fn figure_eight_periodic_orbit() {
         });
     }
 
-    let mut forces = ForceSystem::new(system.particle_count());
+    let mut forces: ForceSystem = ForceSystem::new(system.particle_count());
     forces.add_pairwise_force(NewtonianGravity);
     let _ = forces.evaluate(system.state());
 

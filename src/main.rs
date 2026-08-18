@@ -61,7 +61,7 @@ fn main() -> std::io::Result<()> {
     // ------------------------------------------------------------------------
 
     let mut time = time_start;
-    let mut forces = ForceSystem::new(system.particle_count());
+    let mut forces: ForceSystem = ForceSystem::new(system.particle_count());
     forces.add_pairwise_force(NewtonianGravity);
     let mut diagnostics = Diagnostics::default();
 
