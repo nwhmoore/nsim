@@ -1,12 +1,45 @@
 //! Gravitational acceleration, potential-energy calculation
 
-use crate::math_util::{Geometry, vector3::Vector3};
+use crate::{
+    force::{PairForceContribution, PairwiseForce},
+    math_util::{Geometry, vector3::Vector3},
+    particle::ParticleState,
+};
 use std::f64::consts::PI;
 
 /// Gravitational constant in AU³ · year⁻² · solar-mass⁻¹.
 ///
 /// The units of this constant currently set the units of the entire simulation.
 pub const GRAVITY: f64 = 4.0 * PI * PI;
+
+pub struct NewtonianGravity;
+
+impl PairwiseForce for NewtonianGravity {
+    fn evaluate_pair(
+        &self,
+        state: &ParticleState,
+        first_idx: usize,
+        second_idx: usize,
+        geometry: &Geometry,
+    ) -> PairForceContribution {
+        let first_mass = state.masses()[first_idx];
+        let second_mass = state.masses()[second_idx];
+
+        // Gravity
+        let scale = -GRAVITY * geometry.inv_dist_cubed();
+
+        let first_acceleration = gravity_acceleration(second_mass, geometry.r_vec(), scale);
+        let second_acceleration = gravity_acceleration(first_mass, geometry.r_vec(), -scale);
+
+        let potential_energy = gravitational_potential_energy(first_mass, second_mass, geometry);
+
+        PairForceContribution {
+            first_acceleration,
+            second_acceleration,
+            potential_energy,
+        }
+    }
+}
 
 /// Computes the gravitational acceleration of a particle toward a massive
 /// attractor.

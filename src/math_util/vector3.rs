@@ -76,11 +76,11 @@ impl Vector3 {
 #[derive(Default, Clone)]
 pub struct Vector3Series {
     /// X components.
-    x: Vec<f64>,
+    pub x: Vec<f64>,
     /// Y components.
-    y: Vec<f64>,
+    pub y: Vec<f64>,
     /// Z components.
-    z: Vec<f64>,
+    pub z: Vec<f64>,
 }
 
 impl Vector3Series {

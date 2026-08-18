@@ -1,7 +1,7 @@
 #![feature(test)]
 
 use nsim::{
-    force::ForceBuffer,
+    force::{ForceSystem, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::vector3::Vector3,
     particle::{Particle, ParticleSystem},
@@ -95,11 +95,12 @@ fn solar_system_40kyr() {
     let dt = 0.593; // 5% of jup period
     let steps = (simulation_time / dt) as usize;
 
-    let mut force_buffer = ForceBuffer::new(system.particle_count());
-    let _ = force_buffer.compute_accelerations(system.state());
+    let mut forces = ForceSystem::new(system.particle_count());
+    forces.add_pairwise_force(NewtonianGravity);
+    let _ = forces.evaluate(system.state());
 
     for _ in 0..steps {
-        leapfrog_timestep(system.state_mut(), &mut force_buffer, dt);
+        leapfrog_timestep(system.state_mut(), &mut forces, dt);
     }
 }
 

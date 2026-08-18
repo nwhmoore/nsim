@@ -76,15 +76,9 @@ impl Kahan3Series {
     /// Creates an accumulator with one compensated total per `capacity`.
     pub fn new(capacity: usize) -> Self {
         Self {
-            x: (0..capacity)
-                .map(|_| KahanAccumulator::default())
-                .collect(),
-            y: (0..capacity)
-                .map(|_| KahanAccumulator::default())
-                .collect(),
-            z: (0..capacity)
-                .map(|_| KahanAccumulator::default())
-                .collect(),
+            x: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
+            y: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
+            z: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
         }
     }
 
@@ -107,5 +101,17 @@ impl Kahan3Series {
         self.x[idx].reset();
         self.y[idx].reset();
         self.z[idx].reset();
+    }
+
+    pub fn len(&self) -> usize {
+        debug_assert_eq!(self.x.len(), self.y.len());
+        debug_assert_eq!(self.x.len(), self.z.len());
+
+        self.x.len()
+    }
+
+    #[allow(unused)]
+    pub fn is_empty(&self) -> bool {
+        self.x.is_empty()
     }
 }

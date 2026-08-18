@@ -9,7 +9,7 @@ use std::f64::consts::PI;
 
 use nsim::{
     diagnostics::Diagnostics,
-    force::{ForceBuffer, gravity::GRAVITY},
+    force::{ForceSystem, GRAVITY, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::vector3::Vector3,
     output::{append_particle_timestep, create_particle_file, write_diagnostics_file},
@@ -61,7 +61,8 @@ fn main() -> std::io::Result<()> {
     // ------------------------------------------------------------------------
 
     let mut time = time_start;
-    let mut force_buffer = ForceBuffer::new(system.particle_count());
+    let mut forces = ForceSystem::new(system.particle_count());
+    forces.add_pairwise_force(NewtonianGravity);
     let mut diagnostics = Diagnostics::default();
 
     // --------------------- RECORD INITIAL STATE -----------------------------
@@ -70,12 +71,16 @@ fn main() -> std::io::Result<()> {
         append_particle_timestep(&system, particle_index, time_start)?;
     }
 
-    let initial_evaluation = force_buffer.compute_accelerations(system.state());
-    diagnostics.record(time, system.state(), initial_evaluation.potential_energy);
+    let initial_evaluation = forces.evaluate(system.state());
+    diagnostics.record(
+        time,
+        system.state(),
+        initial_evaluation.potential_energy.total(),
+    );
     // ------------------------------------------------------------------------
 
     while time <= time_end {
-        let force_evaluation = leapfrog_timestep(system.state_mut(), &mut force_buffer, time_step);
+        let force_evaluation = leapfrog_timestep(system.state_mut(), &mut forces, time_step);
 
         time += time_step;
 
@@ -83,7 +88,11 @@ fn main() -> std::io::Result<()> {
             append_particle_timestep(&system, particle_index, time)?;
         }
 
-        diagnostics.record(time, system.state(), force_evaluation.potential_energy);
+        diagnostics.record(
+            time,
+            system.state(),
+            force_evaluation.potential_energy.total(),
+        );
     }
 
     write_diagnostics_file(&diagnostics)?;

@@ -1,5 +1,5 @@
 use nsim::{
-    force::{ForceBuffer, gravity::GRAVITY},
+    force::{ForceSystem, GRAVITY, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::{Geometry, vector3::Vector3},
     particle::{Particle, ParticleSystem},
@@ -62,12 +62,13 @@ fn leapfrog_convergence() {
     for this_time_step in all_time_steps {
         let mut this_system = initial_system.clone();
 
-        let mut force_buffer = ForceBuffer::new(this_system.particle_count());
-        let _initial_computation = force_buffer.compute_accelerations(this_system.state());
+        let mut forces = ForceSystem::new(this_system.particle_count());
+        forces.add_pairwise_force(NewtonianGravity);
+        let _initial_computation = forces.evaluate(this_system.state());
 
         let steps = (one_period / this_time_step).round() as usize;
         for _ in 0..steps {
-            let _ = leapfrog_timestep(this_system.state_mut(), &mut force_buffer, this_time_step);
+            let _ = leapfrog_timestep(this_system.state_mut(), &mut forces, this_time_step);
         }
 
         let error_geometry = Geometry::calculate_geometry(

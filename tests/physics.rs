@@ -1,6 +1,6 @@
 use nsim::{
     diagnostics::Diagnostics,
-    force::{ForceBuffer, gravity::GRAVITY},
+    force::{ForceSystem, GRAVITY, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::{Geometry, vector3::Vector3},
     particle::{Particle, ParticleSystem},
@@ -66,16 +66,25 @@ fn two_body_conservation() {
     // ------------------------------------------------------------------------
 
     let mut time = time_start;
-    let mut force_buffer = ForceBuffer::new(system.particle_count());
+    let mut forces = ForceSystem::new(system.particle_count());
+    forces.add_pairwise_force(NewtonianGravity);
     let mut diagnostics = Diagnostics::default();
 
-    let initial_evaluation = force_buffer.compute_accelerations(system.state());
-    diagnostics.record(time, system.state(), initial_evaluation.potential_energy);
+    let initial_evaluation = forces.evaluate(system.state());
+    diagnostics.record(
+        time,
+        system.state(),
+        initial_evaluation.potential_energy.total(),
+    );
 
     for _ in 0..steps_per_period {
         time += dt;
-        let force_evaluation = leapfrog_timestep(system.state_mut(), &mut force_buffer, dt);
-        diagnostics.record(time, system.state(), force_evaluation.potential_energy);
+        let force_evaluation = leapfrog_timestep(system.state_mut(), &mut forces, dt);
+        diagnostics.record(
+            time,
+            system.state(),
+            force_evaluation.potential_energy.total(),
+        );
     }
 
     let initial_linear_momentum = diagnostics.linear_momentum().value_at(0);
@@ -186,14 +195,15 @@ fn figure_eight_periodic_orbit() {
         });
     }
 
-    let mut force_buffer = ForceBuffer::new(system.particle_count());
-    let _ = force_buffer.compute_accelerations(system.state());
+    let mut forces = ForceSystem::new(system.particle_count());
+    forces.add_pairwise_force(NewtonianGravity);
+    let _ = forces.evaluate(system.state());
 
     // One-third-period choreography test
     let steps_per_third = steps_per_period / 3;
 
     for _ in 0..steps_per_third {
-        leapfrog_timestep(system.state_mut(), &mut force_buffer, dt);
+        leapfrog_timestep(system.state_mut(), &mut forces, dt);
     }
 
     // test tolerance
@@ -225,7 +235,7 @@ fn figure_eight_periodic_orbit() {
 
     // Integrate for remaining one period.
     for _ in steps_per_third..steps_per_period {
-        leapfrog_timestep(system.state_mut(), &mut force_buffer, dt);
+        leapfrog_timestep(system.state_mut(), &mut forces, dt);
     }
 
     // assertions
