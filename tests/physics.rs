@@ -133,7 +133,7 @@ fn figure_eight_periodic_orbit() {
 
     let period = published_period / (2.0 * PI);
 
-    let steps_per_period = 12_000;
+    let steps_per_period = 120_000;
     let dt = period / steps_per_period as f64;
 
     // initial conditions
@@ -197,7 +197,7 @@ fn figure_eight_periodic_orbit() {
     }
 
     // test tolerance
-    let tolerance = 1.0e-5;
+    let tolerance = 1.0e-6;
 
     let permutation = [2usize, 0, 1];
     for (i, &expected_index) in permutation.iter().enumerate() {
@@ -213,13 +213,13 @@ fn figure_eight_periodic_orbit() {
         assert!(
             position_error < tolerance,
             "Body {i} position error after one-third period: \
-            {position_error:e} >= {tolerance}"
+            {position_error:e} >= {tolerance:e}"
         );
 
         assert!(
             velocity_error < tolerance,
             "Body {i} velocity error after one-third period: \
-            {velocity_error:e} >= {tolerance}"
+            {velocity_error:e} >= {tolerance:e}"
         );
     }
 
@@ -242,13 +242,13 @@ fn figure_eight_periodic_orbit() {
         assert!(
             position_error < tolerance,
             "Body {i} position error after one period: \
-            {position_error:e} >= {tolerance}"
+            {position_error:e} >= {tolerance:e}"
         );
 
         assert!(
             velocity_error < tolerance,
             "Body {i} velocity error after one period: \
-            {velocity_error:e} >= {tolerance}"
+            {velocity_error:e} >= {tolerance:e}"
         );
     }
 }
