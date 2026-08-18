@@ -27,7 +27,7 @@ fn two_body_conservation() {
             y: -0.5,
             z: 0.0,
         },
-        mass: Some(1.0),
+        mass: 1.0,
     });
 
     system.new_particle(Particle {
@@ -43,7 +43,7 @@ fn two_body_conservation() {
             y: 0.5,
             z: 0.0,
         },
-        mass: Some(1.0),
+        mass: 1.0,
     });
 
     let pos_geo = Geometry::calculate_geometry(
@@ -182,7 +182,7 @@ fn figure_eight_periodic_orbit() {
             radius: 0.0,
             position: initial_positions[i],
             velocity: initial_velocities[i],
-            mass: Some(1.0),
+            mass: 1.0,
         });
     }
 

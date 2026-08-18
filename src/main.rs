@@ -39,7 +39,7 @@ fn main() -> std::io::Result<()> {
             y: 0.0,
             z: 0.0,
         },
-        mass: Some(1.0),
+        mass: 1.0,
     });
 
     system.new_particle(Particle {
@@ -55,7 +55,7 @@ fn main() -> std::io::Result<()> {
             y: f64::sqrt(GRAVITY / 5.0),
             z: 0.0,
         },
-        mass: None,
+        mass: 0.0,
     });
 
     // ------------------------------------------------------------------------

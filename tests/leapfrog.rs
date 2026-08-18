@@ -27,7 +27,7 @@ fn leapfrog_convergence() {
             y: 0.0,
             z: 0.0,
         },
-        mass: Some(1.0),
+        mass: 1.0,
     });
 
     initial_system.new_particle(Particle {
@@ -43,7 +43,7 @@ fn leapfrog_convergence() {
             y: f64::sqrt(GRAVITY / 5.0),
             z: 0.0,
         },
-        mass: None,
+        mass: 0.0,
     });
 
     // ------------------------------------------------------------------------
@@ -78,13 +78,8 @@ fn leapfrog_convergence() {
             } - this_system.state().positions().value_at(1),
         );
         let error = error_geometry.dist().abs();
-        // println!("error: {error:e}");
+        println!("error: {error:e}");
         errors.push(error);
-        // if time_step_idx > 0 {
-        //     let last_error = errors[time_step_idx - 1];
-        //     let pval = (last_error / error).log2();
-        //     println!("log2 ( {last_error:e} / {error:e} ) = {pval:e}");
-        // }
     }
 
     let log_dt = all_time_steps.iter().map(|dt| dt.ln()).collect::<Vec<_>>();

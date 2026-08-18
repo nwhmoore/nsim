@@ -23,8 +23,6 @@ pub struct ForceBuffer {
     /// [`ParticleState`] used for the most recent evaluation.
     accelerations: Vector3Series,
     accumulator: Kahan3Series,
-    active_massive: Vec<(usize, f64)>,
-    active_massless: Vec<usize>,
 }
 
 impl ForceBuffer {
@@ -33,8 +31,6 @@ impl ForceBuffer {
         ForceBuffer {
             accelerations: Vector3Series::new_zeros(number_particles),
             accumulator: Kahan3Series::new(number_particles),
-            active_massive: Vec::with_capacity(number_particles),
-            active_massless: Vec::with_capacity(number_particles),
         }
     }
 
@@ -57,23 +53,16 @@ impl ForceBuffer {
     /// Newtonian force and potential and should be prevented by the caller.
     #[must_use]
     pub fn compute_accelerations(&mut self, state: &ParticleState) -> ForceEvaluation {
-        // Reuse the preallocated classification buffers for this evaluation.
-        self.fill_alive_particle_groups(state);
-
-        for &particle_idx in self
-            .active_massive
-            .iter()
-            .map(|(particle_idx, _)| particle_idx)
-            .chain(self.active_massless.iter())
-        {
+        for (particle_idx, _) in state.masses().iter().enumerate() {
             self.accumulator.reset_at(particle_idx);
         }
 
         // Pairwise forces
         let mut grav_pot_ener = KahanAccumulator::default();
 
-        for (i, &(first_idx, first_mass)) in self.active_massive.iter().enumerate() {
-            for &(second_idx, second_mass) in &self.active_massive[i + 1..] {
+        for (first_idx, &first_mass) in state.masses().iter().enumerate() {
+            for (second_idx, &second_mass) in state.masses().iter().enumerate().skip(first_idx + 1)
+            {
                 let geometry = Geometry::calculate_geometry(
                     state.positions().value_at(first_idx) - state.positions().value_at(second_idx),
                 );
@@ -81,7 +70,8 @@ impl ForceBuffer {
                 // Gravity
                 let scale = -GRAVITY * geometry.inv_dist_cubed();
                 let first_acceleration = gravity_acceleration(second_mass, geometry.r_vec(), scale);
-                let second_acceleration = gravity_acceleration(first_mass, geometry.r_vec(), -scale);
+                let second_acceleration =
+                    gravity_acceleration(first_mass, geometry.r_vec(), -scale);
                 self.accumulator.add(first_idx, &first_acceleration);
                 self.accumulator.add(second_idx, &second_acceleration);
 
@@ -96,50 +86,8 @@ impl ForceBuffer {
                 .set_value_at(first_idx, self.accumulator.total(first_idx));
         }
 
-        // One-way interactions for massless particles
-        for &small_particle_idx in &self.active_massless {
-            for &(large_particle_idx, attractor_mass) in &self.active_massive {
-                // Geometry
-                let geometry = Geometry::calculate_geometry(
-                    state.positions().value_at(small_particle_idx)
-                        - state.positions().value_at(large_particle_idx),
-                );
-
-                // Gravity
-                let scale = -GRAVITY * geometry.inv_dist_cubed();
-                let gravity_acceleration =
-                    gravity_acceleration(attractor_mass, geometry.r_vec(), scale);
-                self.accumulator
-                    .add(small_particle_idx, &gravity_acceleration);
-            }
-
-            self.accelerations.set_value_at(
-                small_particle_idx,
-                self.accumulator.total(small_particle_idx),
-            );
-        }
-
         ForceEvaluation {
             potential_energy: grav_pot_ener.total(),
-        }
-    }
-
-    /// Reclassifies active particles into massive and massless groups for the
-    /// current force evaluation.
-    fn fill_alive_particle_groups(&mut self, state: &ParticleState) {
-        self.active_massive.clear();
-        self.active_massless.clear();
-
-        for particle_idx in 0..state.particle_count() {
-            if !state.alive_statuses()[particle_idx] {
-                continue;
-            }
-
-            if let Some(mass) = state.masses()[particle_idx] {
-                self.active_massive.push((particle_idx, mass));
-            } else {
-                self.active_massless.push(particle_idx);
-            }
         }
     }
 }

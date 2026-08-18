@@ -107,7 +107,7 @@ impl ParticleCatalog {
 #[derive(Default, Clone)]
 pub struct ParticleState {
     /// Particle masses; `None` denotes a massless test particle.
-    masses: Vec<Option<f64>>,
+    masses: Vec<f64>,
 
     /// Cartesian positions.
     positions: Vector3Series,
@@ -127,7 +127,7 @@ impl ParticleState {
 
     /// Returns the per-particle mass values, including `None` for massless test
     /// particles.
-    pub fn masses(&self) -> &[Option<f64>] {
+    pub fn masses(&self) -> &[f64] {
         &self.masses
     }
 
@@ -167,6 +167,6 @@ pub struct Particle {
     pub position: Vector3,
     /// Initial velocity `(u, v, w)`.
     pub velocity: Vector3,
-    /// Mass, or `None` for a massless test particle.
-    pub mass: Option<f64>,
+    /// Mass
+    pub mass: f64,
 }

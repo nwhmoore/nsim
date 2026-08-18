@@ -81,11 +81,10 @@ impl Diagnostics {
         let mut mass_position = Kahan3::default();
 
         for particle_index in 0..state.particle_count() {
-            if let Some(mass) = state.masses()[particle_index]
-                && state.alive_statuses()[particle_index]
-            {
+            if state.alive_statuses()[particle_index] {
                 let position = state.positions().value_at(particle_index);
                 let velocity = state.velocities().value_at(particle_index);
+                let mass = state.masses()[particle_index];
 
                 total_mass.add(mass);
                 kinetic_energy.add(0.5 * mass * (velocity.square()));
