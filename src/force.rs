@@ -42,7 +42,7 @@ impl<A: AccelerationAccumulator> ForceSystem<A> {
         self.accumulator.clear();
 
         for first_idx in 0..state.particle_count() {
-            if state.alive_statuses()[first_idx] {
+            if !state.alive_statuses()[first_idx] {
                 continue;
             }
 
