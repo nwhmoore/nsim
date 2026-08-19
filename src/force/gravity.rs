@@ -27,7 +27,7 @@ impl PairwiseForce for NewtonianGravity {
 
                 let r2 = dx * dx + dy * dy + dz * dz;
                 // TODO: make an explicit collision policy
-                assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
                 let inv_r = r2.sqrt().recip();
                 let inv_r3 = inv_r * inv_r * inv_r;
 

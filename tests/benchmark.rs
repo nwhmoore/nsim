@@ -109,7 +109,7 @@ mod bench {
     use test::Bencher;
 
     /// Length of simulation (currently in years, set by G)
-    const SIMULATION_TIME: f64 = 4e4;
+    const SIMULATION_TIME: f64 = 4e5;
 
     #[bench]
     fn bench_solar_system(b: &mut Bencher) {

@@ -151,6 +151,10 @@ impl ParticleState {
         &mut self.velocities
     }
 
+    pub fn positions_and_velocities_mut(&mut self) -> (&mut Vector3Series, &mut Vector3Series) {
+        (&mut self.positions, &mut self.velocities)
+    }
+
     /// Returns the per-particle active/inactive flags.
     pub fn alive_statuses(&self) -> &[bool] {
         &self.alive_statuses

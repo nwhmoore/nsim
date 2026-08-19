@@ -37,38 +37,37 @@ use crate::{
 pub fn leapfrog_timestep(
     state: &mut ParticleState,
     forces: &mut ForceSystem,
-    fixed_dt: f64,
+    dt: f64,
 ) -> ForceDiagnostics {
-    for particle_index in 0..state.particle_count() {
-        // if !state.alive_statuses()[particle_index] {
-        //     continue;
-        // }
+    let n = state.particle_count();
+    let half_dt = 0.5 * dt;
 
-        state.velocities_mut().x[particle_index] +=
-            forces.buffer().accelerations().x[particle_index] * 0.5 * fixed_dt;
-        state.velocities_mut().y[particle_index] +=
-            forces.buffer().accelerations().y[particle_index] * 0.5 * fixed_dt;
-        state.velocities_mut().z[particle_index] +=
-            forces.buffer().accelerations().z[particle_index] * 0.5 * fixed_dt;
+    {
+        let accelerations = forces.buffer().accelerations();
+        let (positions, velocities) = state.positions_and_velocities_mut();
 
-        state.positions_mut().x[particle_index] += state.velocities().x[particle_index] * fixed_dt;
-        state.positions_mut().y[particle_index] += state.velocities().y[particle_index] * fixed_dt;
-        state.positions_mut().z[particle_index] += state.velocities().z[particle_index] * fixed_dt;
+        for i in 0..n {
+            velocities.x[i] += accelerations.x[i] * half_dt;
+            velocities.y[i] += accelerations.y[i] * half_dt;
+            velocities.z[i] += accelerations.z[i] * half_dt;
+
+            positions.x[i] += velocities.x[i] * dt;
+            positions.y[i] += velocities.y[i] * dt;
+            positions.z[i] += velocities.z[i] * dt;
+        }
     }
 
     let force_evaluation = forces.evaluate(state);
 
-    for particle_index in 0..state.particle_count() {
-        // if !state.alive_statuses()[particle_index] {
-        //     continue;
-        // }
+    {
+        let accelerations = forces.buffer().accelerations();
+        let velocities = state.velocities_mut();
 
-        state.velocities_mut().x[particle_index] +=
-            forces.buffer().accelerations().x[particle_index] * 0.5 * fixed_dt;
-        state.velocities_mut().y[particle_index] +=
-            forces.buffer().accelerations().y[particle_index] * 0.5 * fixed_dt;
-        state.velocities_mut().z[particle_index] +=
-            forces.buffer().accelerations().z[particle_index] * 0.5 * fixed_dt;
+        for i in 0..n {
+            velocities.x[i] += accelerations.x[i] * half_dt;
+            velocities.y[i] += accelerations.y[i] * half_dt;
+            velocities.z[i] += accelerations.z[i] * half_dt;
+        }
     }
 
     force_evaluation
