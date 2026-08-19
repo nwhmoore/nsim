@@ -71,20 +71,12 @@ fn two_body_conservation() {
     let mut diagnostics = Diagnostics::default();
 
     let initial_evaluation = forces.evaluate(system.state());
-    diagnostics.record(
-        time,
-        system.state(),
-        initial_evaluation.potential_energy.total(),
-    );
+    diagnostics.record(time, system.state(), initial_evaluation.potential_energy);
 
     for _ in 0..steps_per_period {
         time += dt;
         let force_evaluation = leapfrog_timestep(system.state_mut(), &mut forces, dt);
-        diagnostics.record(
-            time,
-            system.state(),
-            force_evaluation.potential_energy.total(),
-        );
+        diagnostics.record(time, system.state(), force_evaluation.potential_energy);
     }
 
     let initial_linear_momentum = diagnostics.linear_momentum().value_at(0);

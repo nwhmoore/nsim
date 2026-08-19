@@ -77,7 +77,7 @@ fn leapfrog_convergence() {
             z: 0.0 - this_system.state().positions().z[1],
         });
         let error = error_geometry.dist().abs();
-        // println!("error: {error:e}");
+        println!("error: {error:e}");
         errors.push(error);
     }
 

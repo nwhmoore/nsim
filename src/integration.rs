@@ -6,7 +6,7 @@
 //! for the next timestep.
 
 use crate::{
-    force::{AccelerationAccumulator, ForceDiagnostics, ForceSystem},
+    force::{ForceDiagnostics, ForceSystem},
     particle::ParticleState,
 };
 
@@ -34,18 +34,15 @@ use crate::{
 ///
 /// This function may panic if the state and force-buffer component vectors do
 /// not have matching lengths.
-pub fn leapfrog_timestep<A>(
+pub fn leapfrog_timestep(
     state: &mut ParticleState,
-    forces: &mut ForceSystem<A>,
+    forces: &mut ForceSystem,
     fixed_dt: f64,
-) -> ForceDiagnostics
-where
-    A: AccelerationAccumulator,
-{
+) -> ForceDiagnostics {
     for particle_index in 0..state.particle_count() {
-        if !state.alive_statuses()[particle_index] {
-            continue;
-        }
+        // if !state.alive_statuses()[particle_index] {
+        //     continue;
+        // }
 
         state.velocities_mut().x[particle_index] +=
             forces.buffer().accelerations().x[particle_index] * 0.5 * fixed_dt;
@@ -62,9 +59,9 @@ where
     let force_evaluation = forces.evaluate(state);
 
     for particle_index in 0..state.particle_count() {
-        if !state.alive_statuses()[particle_index] {
-            continue;
-        }
+        // if !state.alive_statuses()[particle_index] {
+        //     continue;
+        // }
 
         state.velocities_mut().x[particle_index] +=
             forces.buffer().accelerations().x[particle_index] * 0.5 * fixed_dt;

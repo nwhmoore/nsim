@@ -75,7 +75,7 @@ fn main() -> std::io::Result<()> {
     diagnostics.record(
         time,
         system.state(),
-        initial_evaluation.potential_energy.total(),
+        initial_evaluation.potential_energy,
     );
     // ------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ fn main() -> std::io::Result<()> {
         diagnostics.record(
             time,
             system.state(),
-            force_evaluation.potential_energy.total(),
+            force_evaluation.potential_energy,
         );
     }
 

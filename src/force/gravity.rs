@@ -1,8 +1,7 @@
 //! Gravitational acceleration, potential-energy calculation
 
 use crate::{
-    force::{PairForceContribution, PairwiseForce},
-    math_util::{Geometry, vector3::Vector3},
+    force::{ForceEvaluation, PairwiseForce},
     particle::ParticleState,
 };
 use std::f64::consts::PI;
@@ -15,54 +14,38 @@ pub const GRAVITY: f64 = 4.0 * PI * PI;
 pub struct NewtonianGravity;
 
 impl PairwiseForce for NewtonianGravity {
-    fn evaluate_pair(
-        &self,
-        state: &ParticleState,
-        first_idx: usize,
-        second_idx: usize,
-        geometry: &Geometry,
-    ) -> PairForceContribution {
-        let first_mass = state.masses()[first_idx];
-        let second_mass = state.masses()[second_idx];
+    fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>) {
+        let positions = state.positions();
+        let masses = state.masses();
+        let n = state.particle_count();
 
-        // Gravity
-        let scale = -GRAVITY * geometry.inv_dist_cubed();
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let dx = positions.x[i] - positions.x[j];
+                let dy = positions.y[i] - positions.y[j];
+                let dz = positions.z[i] - positions.z[j];
 
-        let first_acceleration = gravity_acceleration(second_mass, geometry.r_vec(), scale);
-        let second_acceleration = gravity_acceleration(first_mass, geometry.r_vec(), -scale);
+                let r2 = dx * dx + dy * dy + dz * dz;
+                // TODO: make an explicit collision policy
+                assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                let inv_r = r2.sqrt().recip();
+                let inv_r3 = inv_r * inv_r * inv_r;
 
-        let potential_energy = gravitational_potential_energy(first_mass, second_mass, geometry);
+                let scale_i = -GRAVITY * masses[j] * inv_r3;
+                let scale_j = GRAVITY * masses[i] * inv_r3;
 
-        PairForceContribution {
-            first_acceleration,
-            second_acceleration,
-            potential_energy,
+                output.accelerations.x[i] += dx * scale_i;
+                output.accelerations.y[i] += dy * scale_i;
+                output.accelerations.z[i] += dz * scale_i;
+
+                output.accelerations.x[j] += dx * scale_j;
+                output.accelerations.y[j] += dy * scale_j;
+                output.accelerations.z[j] += dz * scale_j;
+
+                output
+                    .potential_energy
+                    .add(-GRAVITY * masses[i] * masses[j] * inv_r)
+            }
         }
     }
-}
-
-/// Computes the gravitational acceleration of a particle toward a massive
-/// attractor.
-///
-/// The result is the acceleration vector from the attractor's position to the
-/// particle, scaled by the attractor mass and the pair geometry.
-pub(super) fn gravity_acceleration(attractor_mass: f64, r_vec: &Vector3, scale: f64) -> Vector3 {
-    Vector3 {
-        x: r_vec.x * scale * attractor_mass,
-        y: r_vec.y * scale * attractor_mass,
-        z: r_vec.z * scale * attractor_mass,
-    }
-}
-
-/// Computes the Newtonian gravitational potential energy of one massive pair.
-///
-/// The value is derived from the pair separation stored in `geometry`. The
-/// caller must only evaluate each active massive pair once and avoid coincident
-/// positions, which would otherwise create a singular potential energy.
-pub(super) fn gravitational_potential_energy(
-    first_mass: f64,
-    second_mass: f64,
-    geometry: &Geometry,
-) -> f64 {
-    -GRAVITY * first_mass * second_mass / geometry.dist()
 }

@@ -1,7 +1,7 @@
 #![feature(test)]
 
 use nsim::{
-    force::{DirectAccumulator, ForceSystem, NewtonianGravity},
+    force::{ ForceSystem, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::vector3::Vector3,
     particle::{Particle, ParticleSystem},
@@ -94,7 +94,7 @@ fn solar_system(simulation_time: f64) {
     let dt = 0.593; // 5% of jup period
     let steps = (simulation_time / dt) as usize;
 
-    let mut forces = ForceSystem::<DirectAccumulator>::new(system.particle_count());
+    let mut forces = ForceSystem::new(system.particle_count());
     forces.add_pairwise_force(NewtonianGravity);
     let _ = forces.evaluate(system.state());
 
