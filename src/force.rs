@@ -7,8 +7,7 @@ use crate::{
 
 mod gravity;
 
-pub use gravity::GRAVITY;
-pub use gravity::NewtonianGravity;
+pub use gravity::*;
 
 pub struct ForceSystem {
     pairwise: Vec<Box<dyn PairwiseForce>>,

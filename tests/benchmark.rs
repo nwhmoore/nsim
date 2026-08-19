@@ -1,7 +1,7 @@
 #![feature(test)]
 
 use nsim::{
-    force::{ ForceSystem, NewtonianGravity},
+    force::{ForceSystem, NewtonianGravity},
     integration::leapfrog_timestep,
     math_util::vector3::Vector3,
     particle::{Particle, ParticleSystem},
@@ -109,7 +109,7 @@ mod bench {
     use test::Bencher;
 
     /// Length of simulation (currently in years, set by G)
-    const SIMULATION_TIME: f64 = 4e5;
+    const SIMULATION_TIME: f64 = 4e4;
 
     #[bench]
     fn bench_solar_system(b: &mut Bencher) {

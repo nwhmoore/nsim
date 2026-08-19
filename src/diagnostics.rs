@@ -6,10 +6,8 @@
 
 use crate::{
     math_util::{
-        kahan::{Kahan3, KahanAccumulator},
-        vector3::{Vector3, Vector3Series},
-    },
-    particle::ParticleState,
+        kahan::{ Kahan3, KahanAccumulator}, vector3::{Vector3, Vector3Series},
+    }, particle::ParticleState,
 };
 
 /// Time series of global quantities derived from simulation states.

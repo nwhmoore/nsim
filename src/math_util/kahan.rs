@@ -65,35 +65,20 @@ impl Kahan3 {
 /// evaluation.
 pub struct Kahan3Series {
     /// Accumulated X-component accelerations for each particle.
-    x: Vec<KahanAccumulator>,
+    pub x: Vec<KahanAccumulator>,
     /// Accumulated Y-component accelerations for each particle.
-    y: Vec<KahanAccumulator>,
+    pub y: Vec<KahanAccumulator>,
     /// Accumulated Z-component accelerations for each particle.
-    z: Vec<KahanAccumulator>,
+    pub z: Vec<KahanAccumulator>,
 }
 
 impl Kahan3Series {
     /// Creates an accumulator with one compensated total per `capacity`.
-    pub fn new(capacity: usize) -> Self {
+    pub fn with_len(capacity: usize) -> Self {
         Self {
             x: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
             y: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
             z: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
-        }
-    }
-
-    pub fn add(&mut self, idx: usize, vector: &Vector3) {
-        self.x[idx].add(vector.x);
-        self.y[idx].add(vector.y);
-        self.z[idx].add(vector.z);
-    }
-
-    #[must_use]
-    pub fn total(&self, idx: usize) -> Vector3 {
-        Vector3 {
-            x: self.x[idx].total(),
-            y: self.y[idx].total(),
-            z: self.z[idx].total(),
         }
     }
 
