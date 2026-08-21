@@ -9,27 +9,34 @@ mod gravity;
 
 pub use gravity::*;
 
-pub struct ForceSystem {
+#[derive(Default, Clone)]
+pub struct ForceConfiguration {
     pairwise: Vec<Box<dyn PairwiseForce>>,
-    buffer: ForceBuffer,
 }
 
-impl ForceSystem {
-    pub fn new(particle_count: usize) -> Self {
-        Self {
-            pairwise: Vec::new(),
-            buffer: ForceBuffer::new(particle_count),
-        }
-    }
-
+impl ForceConfiguration {
     pub fn add_pairwise_force<F>(&mut self, force: F)
     where
         F: PairwiseForce + 'static,
     {
         self.pairwise.push(Box::new(force));
     }
+}
 
-    pub fn evaluate(&mut self, state: &ParticleState) -> ForceDiagnostics {
+pub struct ForceSystem {
+    configuration: ForceConfiguration,
+    buffer: ForceBuffer,
+}
+
+impl ForceSystem {
+    pub fn new(configuration: ForceConfiguration, particle_count: usize) -> Self {
+        Self {
+            configuration,
+            buffer: ForceBuffer::new(particle_count),
+        }
+    }
+
+    pub fn evaluate(&mut self, particle_state: &ParticleState) -> ForceDiagnostics {
         self.buffer.clear();
 
         let mut output = ForceEvaluation {
@@ -37,8 +44,8 @@ impl ForceSystem {
             potential_energy: KahanAccumulator::default(),
         };
 
-        for force in &self.pairwise {
-            force.evaluate(state, &mut output);
+        for force in &self.configuration.pairwise {
+            force.evaluate(particle_state, &mut output);
         }
 
         ForceDiagnostics {
@@ -51,8 +58,8 @@ impl ForceSystem {
     }
 }
 
-pub trait PairwiseForce {
-    fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>);
+pub trait PairwiseForce: PairwiseForceClone {
+    fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>);
 }
 
 pub struct ForceEvaluation<'a> {
@@ -88,4 +95,23 @@ impl ForceBuffer {
 pub struct ForceDiagnostics {
     /// Gravitational potential energy of the active massive bodies.
     pub potential_energy: f64,
+}
+
+pub trait PairwiseForceClone {
+    fn clone_box(&self) -> Box<dyn PairwiseForce>;
+}
+
+impl<T> PairwiseForceClone for T
+where
+    T: PairwiseForce + Clone + 'static,
+{
+    fn clone_box(&self) -> Box<dyn PairwiseForce> {
+        Box::new(self.clone())
+    }
+}
+
+impl Clone for Box<dyn PairwiseForce> {
+    fn clone(&self) -> Self {
+        self.clone_box()
+    }
 }

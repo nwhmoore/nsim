@@ -1,9 +1,9 @@
 use nsim::{
-    diagnostics::Diagnostics,
-    force::{ForceSystem, GRAVITY, NewtonianGravity},
-    integration::leapfrog_timestep,
+    force::{GRAVITY, NewtonianGravity},
+    integration::Leapfrog,
     math_util::{Geometry, vector3::Vector3},
     particle::{Particle, ParticleSystem},
+    simulation::SimulationBuilder,
 };
 use std::f64::consts::PI;
 
@@ -11,7 +11,6 @@ use std::f64::consts::PI;
 /// energy for a two massive particle system in a highly eccentric orbit.
 #[test]
 fn two_body_conservation() {
-    let time_start = 0.0;
     let mut system = ParticleSystem::new_system();
 
     system.new_particle(Particle {
@@ -65,19 +64,19 @@ fn two_body_conservation() {
 
     // ------------------------------------------------------------------------
 
-    let mut time = time_start;
-    let mut forces: ForceSystem = ForceSystem::new(system.particle_count());
-    forces.add_pairwise_force(NewtonianGravity);
-    let mut diagnostics = Diagnostics::default();
+    let mut simulation = SimulationBuilder::new_simulation()
+        .add_particle_system(system)
+        .use_integrator(Leapfrog)
+        .add_pairwise_force(NewtonianGravity)
+        .set_end_time(one_period)
+        .set_time_step(dt)
+        .set_diagnostic_interval(one_period)
+        .build()
+        .expect("simulation built");
 
-    let initial_evaluation = forces.evaluate(system.state());
-    diagnostics.record(time, system.state(), initial_evaluation.potential_energy);
+    simulation.run();
 
-    for _ in 0..steps_per_period {
-        time += dt;
-        let force_evaluation = leapfrog_timestep(system.state_mut(), &mut forces, dt);
-        diagnostics.record(time, system.state(), force_evaluation.potential_energy);
-    }
+    let diagnostics = simulation.diagnostics();
 
     let initial_linear_momentum = diagnostics.linear_momentum().value_at(0);
     let final_linear_momentum = diagnostics
@@ -133,7 +132,6 @@ fn figure_eight_periodic_orbit() {
     assert!((GRAVITY - 4.0 * PI * PI).abs() < f64::EPSILON);
 
     let period = published_period / (2.0 * PI);
-
     let steps_per_period = 120_000;
     let dt = period / steps_per_period as f64;
 
@@ -187,28 +185,30 @@ fn figure_eight_periodic_orbit() {
         });
     }
 
-    let mut forces: ForceSystem = ForceSystem::new(system.particle_count());
-    forces.add_pairwise_force(NewtonianGravity);
-    let _ = forces.evaluate(system.state());
+    let mut simulation = SimulationBuilder::new_simulation()
+        .add_particle_system(system)
+        .use_integrator(Leapfrog)
+        .add_pairwise_force(NewtonianGravity)
+        .set_end_time(period / 3.0)
+        .set_time_step(dt)
+        .build()
+        .expect("sim built");
 
-    // One-third-period choreography test
-    let steps_per_third = steps_per_period / 3;
+    simulation.run();
 
-    for _ in 0..steps_per_third {
-        leapfrog_timestep(system.state_mut(), &mut forces, dt);
-    }
+    let positions = simulation.particles().state().positions();
+    let velocities = simulation.particles().state().velocities();
 
     // test tolerance
     let tolerance = 1.0e-6;
 
     let permutation = [2usize, 0, 1];
     for (i, &expected_index) in permutation.iter().enumerate() {
-        let &position_error = Geometry::calculate_geometry(
-            system.state().positions().value_at(i) - initial_positions[expected_index],
-        )
-        .dist();
+        let &position_error =
+            Geometry::calculate_geometry(positions.value_at(i) - initial_positions[expected_index])
+                .dist();
         let &velocity_error = Geometry::calculate_geometry(
-            system.state().velocities().value_at(i) - initial_velocities[expected_index],
+            velocities.value_at(i) - initial_velocities[expected_index],
         )
         .dist();
 
@@ -225,21 +225,18 @@ fn figure_eight_periodic_orbit() {
         );
     }
 
-    // Integrate for remaining one period.
-    for _ in steps_per_third..steps_per_period {
-        leapfrog_timestep(system.state_mut(), &mut forces, dt);
-    }
+    simulation.set_end_time(period);
+    simulation.run();
+
+    let positions = simulation.particles().state().positions();
+    let velocities = simulation.particles().state().velocities();
 
     // assertions
     for i in 0..3 {
-        let &position_error = Geometry::calculate_geometry(
-            system.state().positions().value_at(i) - initial_positions[i],
-        )
-        .dist();
-        let &velocity_error = Geometry::calculate_geometry(
-            system.state().velocities().value_at(i) - initial_velocities[i],
-        )
-        .dist();
+        let &position_error =
+            Geometry::calculate_geometry(positions.value_at(i) - initial_positions[i]).dist();
+        let &velocity_error =
+            Geometry::calculate_geometry(velocities.value_at(i) - initial_velocities[i]).dist();
 
         assert!(
             position_error < tolerance,

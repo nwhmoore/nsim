@@ -1,8 +1,9 @@
 use nsim::{
-    force::{ForceSystem, GRAVITY, NewtonianGravity},
-    integration::leapfrog_timestep,
-    math_util::{Geometry, vector3::Vector3},
+    force::{GRAVITY, NewtonianGravity},
+    integration::Leapfrog,
+    math_util::vector3::Vector3,
     particle::{Particle, ParticleSystem},
+    simulation::SimulationBuilder,
 };
 use std::f64::consts::PI;
 
@@ -48,35 +49,41 @@ fn leapfrog_convergence() {
 
     // ------------------------------------------------------------------------
 
-    let time_step = one_period * 0.01;
+    let ini_time_step = one_period * 0.01;
     let all_time_steps = [
-        time_step / 100.0,
-        time_step / 200.0,
-        time_step / 400.0,
-        time_step / 800.0,
-        time_step / 1_600.0,
-        time_step / 3_200.0,
+        ini_time_step / 100.0,
+        ini_time_step / 200.0,
+        ini_time_step / 400.0,
+        ini_time_step / 800.0,
+        ini_time_step / 1_600.0,
+        ini_time_step / 3_200.0,
     ];
     let mut errors = Vec::with_capacity(all_time_steps.len());
 
+    let sim_builder = SimulationBuilder::new_simulation()
+        .add_particle_system(initial_system)
+        .use_integrator(Leapfrog)
+        .add_pairwise_force(NewtonianGravity)
+        .set_end_time(one_period)
+        .set_diagnostic_interval(one_period);
+
     for this_time_step in all_time_steps {
-        let mut this_system = initial_system.clone();
+        let mut this_simulation = sim_builder.clone()
+            .set_time_step(this_time_step)
+            .build()
+            .expect("simulation built");
 
-        let mut forces: ForceSystem = ForceSystem::new(this_system.particle_count());
-        forces.add_pairwise_force(NewtonianGravity);
-        let _initial_computation = forces.evaluate(this_system.state());
+        this_simulation.run();
 
-        let steps = (one_period / this_time_step).round() as usize;
-        for _ in 0..steps {
-            let _ = leapfrog_timestep(this_system.state_mut(), &mut forces, this_time_step);
+        let jup_position = this_simulation.particles().state().positions().value_at(1);
+
+        let error = Vector3 {
+            x: 5.0 - jup_position.x,
+            y: 0.0 - jup_position.y,
+            z: 0.0 - jup_position.z,
         }
-
-        let error_geometry = Geometry::calculate_geometry(Vector3 {
-            x: 5.0 - this_system.state().positions().x[1],
-            y: 0.0 - this_system.state().positions().y[1],
-            z: 0.0 - this_system.state().positions().z[1],
-        });
-        let error = error_geometry.dist().abs();
+        .square()
+         .sqrt();
         println!("error: {error:e}");
         errors.push(error);
     }

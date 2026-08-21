@@ -1,17 +1,18 @@
 #![feature(test)]
 
 use nsim::{
-    force::{ForceSystem, NewtonianGravity},
-    integration::leapfrog_timestep,
+    force::NewtonianGravity,
+    integration::Leapfrog,
     math_util::vector3::Vector3,
     particle::{Particle, ParticleSystem},
+    simulation::SimulationBuilder,
 };
 
 fn solar_system(simulation_time: f64) {
-    let mut system = ParticleSystem::new_system();
+    let mut particle_system = ParticleSystem::new_system();
     let velocity_scale = 365.2425;
 
-    system.new_particle(Particle {
+    particle_system.new_particle(Particle {
         name: String::from("Sol"),
         radius: 0.0,
         position: Vector3 {
@@ -27,7 +28,7 @@ fn solar_system(simulation_time: f64) {
         mass: 1.0,
     });
 
-    system.new_particle(Particle {
+    particle_system.new_particle(Particle {
         name: String::from("Jupiter"),
         radius: 0.0,
         position: Vector3 {
@@ -43,7 +44,7 @@ fn solar_system(simulation_time: f64) {
         mass: 9.547919384243222e-4,
     });
 
-    system.new_particle(Particle {
+    particle_system.new_particle(Particle {
         name: String::from("Saturn"),
         radius: 0.0,
         position: Vector3 {
@@ -59,7 +60,7 @@ fn solar_system(simulation_time: f64) {
         mass: 2.858859806661029e-4,
     });
 
-    system.new_particle(Particle {
+    particle_system.new_particle(Particle {
         name: String::from("Uranus"),
         radius: 0.0,
         position: Vector3 {
@@ -75,7 +76,7 @@ fn solar_system(simulation_time: f64) {
         mass: 4.3662440433515637e-5,
     });
 
-    system.new_particle(Particle {
+    particle_system.new_particle(Particle {
         name: String::from("Neptune"),
         radius: 0.0,
         position: Vector3 {
@@ -92,15 +93,16 @@ fn solar_system(simulation_time: f64) {
     });
 
     let dt = 0.593; // 5% of jup period
-    let steps = (simulation_time / dt) as usize;
+    let mut simulation = SimulationBuilder::new_simulation()
+        .add_particle_system(particle_system)
+        .use_integrator(Leapfrog)
+        .add_pairwise_force(NewtonianGravity)
+        .set_end_time(simulation_time)
+        .set_time_step(dt)
+        .build()
+        .expect("simulation built");
 
-    let mut forces = ForceSystem::new(system.particle_count());
-    forces.add_pairwise_force(NewtonianGravity);
-    let _ = forces.evaluate(system.state());
-
-    for _ in 0..steps {
-        leapfrog_timestep(system.state_mut(), &mut forces, dt);
-    }
+    simulation.run();
 }
 
 mod bench {

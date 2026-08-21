@@ -12,6 +12,7 @@ use std::f64::consts::PI;
 /// The units of this constant currently set the units of the entire simulation.
 pub const GRAVITY: f64 = 4.0 * PI * PI;
 
+#[derive(Clone)]
 pub struct NewtonianGravity;
 
 impl PairwiseForce for NewtonianGravity {
@@ -51,6 +52,7 @@ impl PairwiseForce for NewtonianGravity {
     }
 }
 
+#[derive(Clone)]
 pub struct CompensatedGravity;
 
 impl PairwiseForce for CompensatedGravity {

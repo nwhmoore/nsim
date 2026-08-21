@@ -6,15 +6,17 @@
 
 use crate::{
     math_util::{
-        kahan::{ Kahan3, KahanAccumulator}, vector3::{Vector3, Vector3Series},
-    }, particle::ParticleState,
+        kahan::{Kahan3, KahanAccumulator},
+        vector3::{Vector3, Vector3Series},
+    },
+    particle::ParticleState,
 };
 
 /// Time series of global quantities derived from simulation states.
 ///
 /// Every field has one entry per call to [`Diagnostics::record`]. The entry at
 /// a given index therefore refers to the time at the same index in [`Self::time`].
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Diagnostics {
     /// Simulation time associated with each diagnostic sample.
     time: Vec<f64>,
@@ -65,7 +67,7 @@ impl Diagnostics {
     /// duplicate the force-law calculation. If `state` contains no active
     /// massive bodies, the total mass is zero and the center-of-mass values are
     /// computed as division-by-zero results (typically `NaN` or `Inf`).
-    pub fn record(&mut self, time: f64, state: &ParticleState, potential_energy: f64) {
+    pub fn record(&mut self, time: f64, particle_state: &ParticleState, potential_energy: f64) {
         self.time.push(time);
 
         let mut total_mass = KahanAccumulator::default();
@@ -78,19 +80,19 @@ impl Diagnostics {
 
         let mut mass_position = Kahan3::default();
 
-        for particle_index in 0..state.particle_count() {
-            if state.alive_statuses()[particle_index] {
+        for particle_index in 0..particle_state.particle_count() {
+            if particle_state.alive_statuses()[particle_index] {
                 let position = Vector3 {
-                    x: state.positions().x[particle_index],
-                    y: state.positions().y[particle_index],
-                    z: state.positions().z[particle_index],
+                    x: particle_state.positions().x[particle_index],
+                    y: particle_state.positions().y[particle_index],
+                    z: particle_state.positions().z[particle_index],
                 };
                 let velocity = Vector3 {
-                    x: state.velocities().x[particle_index],
-                    y: state.velocities().y[particle_index],
-                    z: state.velocities().z[particle_index],
+                    x: particle_state.velocities().x[particle_index],
+                    y: particle_state.velocities().y[particle_index],
+                    z: particle_state.velocities().z[particle_index],
                 };
-                let mass = state.masses()[particle_index];
+                let mass = particle_state.masses()[particle_index];
 
                 total_mass.add(mass);
                 kinetic_energy.add(0.5 * mass * (velocity.square()));
