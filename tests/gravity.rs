@@ -48,8 +48,9 @@ fn two_body_conservation() {
     // let pos_geo = Geometry::calculate_geometry(
     //     system.state().positions().value_at(0) - system.state().positions().value_at(1),
     // );
-    let pos_vec = system.state().positions().value_at(0) - system.state().positions().value_at(1);
-    let vel_vec = system.state().velocities().value_at(0) - system.state().velocities().value_at(1);
+    let pos_vec = system.state().positions().vector_at(0) - system.state().positions().vector_at(1);
+    let vel_vec =
+        system.state().velocities().vector_at(0) - system.state().velocities().vector_at(1);
 
     let relative_speed = vel_vec.norm();
     let relative_position = pos_vec.norm();
@@ -68,7 +69,7 @@ fn two_body_conservation() {
     let mut simulation = SimulationBuilder::new()
         .with_particle_system(system)
         .use_integrator(Leapfrog)
-        .add_pairwise_force(NewtonianGravity)
+        .add_force(NewtonianGravity)
         .set_time_step(dt)
         .set_diagnostic_interval(one_period)
         .build()
@@ -78,18 +79,18 @@ fn two_body_conservation() {
 
     let diagnostics = simulation.diagnostics();
 
-    let initial_linear_momentum = diagnostics.linear_momentum().value_at(0);
+    let initial_linear_momentum = diagnostics.linear_momentum().vector_at(0);
     let final_linear_momentum = diagnostics
         .linear_momentum()
-        .value_at(diagnostics.number_samples() - 1);
+        .vector_at(diagnostics.number_samples() - 1);
     let change_in_linear_momentum = (final_linear_momentum - initial_linear_momentum)
         .square()
         .sqrt();
 
-    let initial_angular_momentum = diagnostics.angular_momentum().value_at(0);
+    let initial_angular_momentum = diagnostics.angular_momentum().vector_at(0);
     let final_angular_momentum = diagnostics
         .angular_momentum()
-        .value_at(diagnostics.number_samples() - 1);
+        .vector_at(diagnostics.number_samples() - 1);
     let change_in_angular_momentum = (final_angular_momentum - initial_angular_momentum)
         .square()
         .sqrt();
@@ -189,7 +190,7 @@ fn figure_eight_periodic_orbit() {
     let mut simulation = SimulationBuilder::new()
         .with_particle_system(system)
         .use_integrator(Leapfrog)
-        .add_pairwise_force(NewtonianGravity)
+        .add_force(NewtonianGravity)
         .set_time_step(dt)
         .build()
         .expect("sim built");
@@ -204,10 +205,10 @@ fn figure_eight_periodic_orbit() {
 
     let permutation = [2usize, 0, 1];
     for (i, &expected_index) in permutation.iter().enumerate() {
-        let position_error = (positions.value_at(i) - initial_positions[expected_index])
+        let position_error = (positions.vector_at(i) - initial_positions[expected_index])
             .square()
             .sqrt();
-        let velocity_error = (velocities.value_at(i) - initial_velocities[expected_index])
+        let velocity_error = (velocities.vector_at(i) - initial_velocities[expected_index])
             .square()
             .sqrt();
 
@@ -231,8 +232,8 @@ fn figure_eight_periodic_orbit() {
 
     // assertions
     for i in 0..3 {
-        let position_error = (positions.value_at(i) - initial_positions[i]).norm();
-        let velocity_error = (velocities.value_at(i) - initial_velocities[i]).norm();
+        let position_error = (positions.vector_at(i) - initial_positions[i]).norm();
+        let velocity_error = (velocities.vector_at(i) - initial_velocities[i]).norm();
 
         assert!(
             position_error < tolerance,

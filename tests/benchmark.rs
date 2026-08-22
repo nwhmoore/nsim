@@ -96,7 +96,7 @@ fn solar_system(simulation_time: f64) {
     let mut simulation = SimulationBuilder::new()
         .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
-        .add_pairwise_force(NewtonianGravity)
+        .add_force(NewtonianGravity)
         .set_time_step(dt)
         .build()
         .expect("simulation built");

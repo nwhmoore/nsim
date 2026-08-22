@@ -1,7 +1,7 @@
 use crate::{
     diagnostics::Diagnostics,
     error::SimError,
-    force::{ForceConfiguration, ForceSystem, PairwiseForce},
+    force::{Force, ForceConfiguration, ForceSystem},
     integration::{Integrator, Leapfrog},
     particle::{Particle, ParticleSystem},
     time::Time,
@@ -72,8 +72,8 @@ impl<I: Integrator> SimulationBuilder<I> {
         self
     }
 
-    pub fn add_pairwise_force<F: PairwiseForce + 'static>(mut self, force: F) -> Self {
-        self.force_config.add_pairwise_force(force);
+    pub fn add_force<F: Force + 'static>(mut self, force: F) -> Self {
+        self.force_config.add_force(force);
         self
     }
 
@@ -97,7 +97,7 @@ pub struct Simulation<I: Integrator = Leapfrog> {
 }
 
 impl<I: Integrator> Simulation<I> {
-    pub fn advance_one_step(&mut self) {
+    pub fn run_one_step(&mut self) {
         let force_evaluation = self.integrator.evaluate_timestep(
             self.particles.state_mut(),
             &mut self.forces,
@@ -120,13 +120,13 @@ impl<I: Integrator> Simulation<I> {
 
     pub fn run_steps(&mut self, steps: usize) {
         for _ in 0..steps {
-            self.advance_one_step();
+            self.run_one_step();
         }
     }
 
     pub fn run_until(&mut self, end_time: f64) {
         while self.current_time() + self.time.time_step <= end_time {
-            self.advance_one_step();
+            self.run_one_step();
         }
     }
 
@@ -138,8 +138,8 @@ impl<I: Integrator> Simulation<I> {
         &self.diagnostics
     }
 
-    pub fn set_time_step(&mut self, dt: f64) {
-        self.time.time_step = dt;
+    pub fn get_time_step(&self) -> f64 {
+        self.time.time_step
     }
 
     pub fn current_time(&self) -> f64 {

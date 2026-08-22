@@ -1,11 +1,86 @@
 use nsim::{
-    force::{GRAVITY, NewtonianGravity},
+    force::{ConstantAccel, GRAVITY, NewtonianGravity},
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
     simulation::SimulationBuilder,
 };
 use std::f64::consts::PI;
+
+#[test]
+fn no_forces() {
+    const TOLERANCE: f64 = 1e-12;
+
+    let mut simulation = SimulationBuilder::new()
+        .add_particle(Particle {
+            name: String::from("test"),
+            radius: 0.0,
+            // initial zeros
+            position: Vector3::default(),
+            // initial zeros
+            velocity: Vector3::default(),
+            mass: 0.0,
+        })
+        .use_integrator(Leapfrog)
+        .build()
+        .expect("sim built");
+
+    simulation.run_steps(1_000);
+
+    assert!(
+        (simulation.particles().state().positions().vector_at(0) - Vector3::default()).norm()
+            < TOLERANCE
+    );
+    assert!(
+        (simulation.particles().state().velocities().vector_at(0) - Vector3::default()).norm()
+            < TOLERANCE
+    );
+}
+
+/// Tests a single particle under a constant acceleration. This isolates issues
+/// in [`integration`] vs [`force`].
+///
+/// [`integration`]: nsim::integration
+/// [`force`]: nsim::force
+#[test]
+fn constant_acceleration() {
+    const TOLERANCE: f64 = 1e-12;
+    const ACCEL_VAL: f64 = -9.81;
+
+    let mut simulation = SimulationBuilder::new()
+        .add_particle(Particle {
+            name: String::from("test"),
+            radius: 0.0,
+            // initial zeros
+            position: Vector3::default(),
+            // initial zeros
+            velocity: Vector3::default(),
+            mass: 0.0,
+        })
+        .use_integrator(Leapfrog)
+        .add_force(ConstantAccel {
+            accel_vec: Vector3 {
+                x: 0.0,
+                y: ACCEL_VAL,
+                z: 0.0,
+            },
+        })
+        .build()
+        .expect("sim built");
+
+    simulation.run_one_step();
+
+    let dt = simulation.get_time_step();
+
+    assert!(
+        (simulation.particles().state().positions().y[0] - (0.5 * ACCEL_VAL * dt * dt)).abs()
+            < TOLERANCE
+    );
+
+    assert!(
+        (simulation.particles().state().velocities().y[0] - (ACCEL_VAL * dt)).abs() < TOLERANCE
+    );
+}
 
 #[test]
 fn leapfrog_convergence() {
@@ -61,7 +136,7 @@ fn leapfrog_convergence() {
     let sim_builder = SimulationBuilder::new()
         .with_particle_system(initial_system)
         .use_integrator(Leapfrog)
-        .add_pairwise_force(NewtonianGravity)
+        .add_force(NewtonianGravity)
         .set_diagnostic_interval(one_period);
 
     for (&step_per_period, &this_time_step) in steps_per_periods.iter().zip(all_time_steps.iter()) {
@@ -73,7 +148,7 @@ fn leapfrog_convergence() {
 
         this_simulation.run_steps(step_per_period);
 
-        let jup_position = this_simulation.particles().state().positions().value_at(1);
+        let jup_position = this_simulation.particles().state().positions().vector_at(1);
 
         let error = Vector3 {
             x: 5.0 - jup_position.x,

@@ -60,7 +60,7 @@ fn main() -> Result<(), SimError> {
     let mut simulation = SimulationBuilder::new()
         .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
-        .add_pairwise_force(NewtonianGravity)
+        .add_force(NewtonianGravity)
         .set_time_step(end_time * 0.01)
         .set_diagnostic_interval(end_time)
         .build()?;

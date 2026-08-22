@@ -3,7 +3,7 @@
 pub mod kahan;
 
 /// Three Cartesian components of a vector.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Vector3 {
     /// X component.
     pub x: f64,
@@ -105,7 +105,7 @@ impl Vector3Series {
     ///
     /// This creates an entirely new structure, DO NOT USE IN FORCE EVALUATION
     /// OR INTEGRATION. For diagnostic and testing API only.
-    pub fn value_at(&self, idx: usize) -> Vector3 {
+    pub fn vector_at(&self, idx: usize) -> Vector3 {
         Vector3 {
             x: self.x[idx],
             y: self.y[idx],

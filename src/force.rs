@@ -6,18 +6,20 @@ use crate::{
 };
 
 mod gravity;
+mod simple;
 
 pub use gravity::*;
+pub use simple::*;
 
 #[derive(Default, Clone)]
 pub struct ForceConfiguration {
-    pairwise: Vec<Box<dyn PairwiseForce>>,
+    pairwise: Vec<Box<dyn Force>>,
 }
 
 impl ForceConfiguration {
-    pub fn add_pairwise_force<F>(&mut self, force: F)
+    pub fn add_force<F>(&mut self, force: F)
     where
-        F: PairwiseForce + 'static,
+        F: Force + 'static,
     {
         self.pairwise.push(Box::new(force));
     }
@@ -58,7 +60,7 @@ impl ForceSystem {
     }
 }
 
-pub trait PairwiseForce: PairwiseForceClone {
+pub trait Force: ForceClone {
     fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>);
 }
 
@@ -98,20 +100,20 @@ pub struct ForceDiagnostics {
     pub potential_energy: f64,
 }
 
-pub trait PairwiseForceClone {
-    fn clone_box(&self) -> Box<dyn PairwiseForce>;
+pub trait ForceClone {
+    fn clone_box(&self) -> Box<dyn Force>;
 }
 
-impl<T> PairwiseForceClone for T
+impl<T> ForceClone for T
 where
-    T: PairwiseForce + Clone + 'static,
+    T: Force + Clone + 'static,
 {
-    fn clone_box(&self) -> Box<dyn PairwiseForce> {
+    fn clone_box(&self) -> Box<dyn Force> {
         Box::new(self.clone())
     }
 }
 
-impl Clone for Box<dyn PairwiseForce> {
+impl Clone for Box<dyn Force> {
     fn clone(&self) -> Self {
         self.clone_box()
     }

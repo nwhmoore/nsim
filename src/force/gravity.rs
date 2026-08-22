@@ -1,7 +1,7 @@
 //! Gravitational acceleration, potential-energy calculation
 
 use crate::{
-    force::{ForceEvaluation, PairwiseForce},
+    force::{Force, ForceEvaluation},
     math_util::kahan::Kahan3Series,
     particle::ParticleState,
 };
@@ -15,7 +15,7 @@ pub const GRAVITY: f64 = 4.0 * PI * PI;
 #[derive(Clone)]
 pub struct NewtonianGravity;
 
-impl PairwiseForce for NewtonianGravity {
+impl Force for NewtonianGravity {
     fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = state.positions();
         let masses = state.masses();
@@ -55,7 +55,7 @@ impl PairwiseForce for NewtonianGravity {
 #[derive(Clone)]
 pub struct CompensatedGravity;
 
-impl PairwiseForce for CompensatedGravity {
+impl Force for CompensatedGravity {
     fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = state.positions();
         let masses = state.masses();
