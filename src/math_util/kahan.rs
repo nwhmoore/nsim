@@ -1,4 +1,4 @@
-use crate::math_util::vector3::Vector3;
+use crate::math_util::Vector3;
 
 /// Accumulates a sum while tracking the rounding error introduced by `f64`
 /// addition.

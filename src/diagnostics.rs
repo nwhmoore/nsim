@@ -7,7 +7,7 @@
 use crate::{
     math_util::{
         kahan::{Kahan3, KahanAccumulator},
-        vector3::{Vector3, Vector3Series},
+        {Vector3, Vector3Series},
     },
     particle::ParticleState,
 };

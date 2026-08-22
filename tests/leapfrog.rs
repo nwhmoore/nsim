@@ -1,7 +1,7 @@
 use nsim::{
     force::{GRAVITY, NewtonianGravity},
     integration::Leapfrog,
-    math_util::vector3::Vector3,
+    math_util::Vector3,
     particle::{Particle, ParticleSystem},
     simulation::SimulationBuilder,
 };
@@ -68,7 +68,8 @@ fn leapfrog_convergence() {
         .set_diagnostic_interval(one_period);
 
     for this_time_step in all_time_steps {
-        let mut this_simulation = sim_builder.clone()
+        let mut this_simulation = sim_builder
+            .clone()
             .set_time_step(this_time_step)
             .build()
             .expect("simulation built");
@@ -83,7 +84,7 @@ fn leapfrog_convergence() {
             z: 0.0 - jup_position.z,
         }
         .square()
-         .sqrt();
+        .sqrt();
         println!("error: {error:e}");
         errors.push(error);
     }

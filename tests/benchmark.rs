@@ -3,7 +3,7 @@
 use nsim::{
     force::NewtonianGravity,
     integration::Leapfrog,
-    math_util::vector3::Vector3,
+    math_util::Vector3,
     particle::{Particle, ParticleSystem},
     simulation::SimulationBuilder,
 };

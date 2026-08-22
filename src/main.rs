@@ -11,7 +11,7 @@ use nsim::{
     error::SimError,
     force::{GRAVITY, NewtonianGravity},
     integration::Leapfrog,
-    math_util::vector3::Vector3,
+    math_util::Vector3,
     particle::{Particle, ParticleSystem},
     simulation::SimulationBuilder,
 };

@@ -1,7 +1,7 @@
 use nsim::{
     force::{GRAVITY, NewtonianGravity},
     integration::Leapfrog,
-    math_util::{Geometry, vector3::Vector3},
+    math_util::Vector3,
     particle::{Particle, ParticleSystem},
     simulation::SimulationBuilder,
 };
@@ -45,13 +45,14 @@ fn two_body_conservation() {
         mass: 1.0,
     });
 
-    let pos_geo = Geometry::calculate_geometry(
-        system.state().positions().value_at(0) - system.state().positions().value_at(1),
-    );
+    // let pos_geo = Geometry::calculate_geometry(
+    //     system.state().positions().value_at(0) - system.state().positions().value_at(1),
+    // );
+    let pos_vec = system.state().positions().value_at(0) - system.state().positions().value_at(1);
     let vel_vec = system.state().velocities().value_at(0) - system.state().velocities().value_at(1);
 
     let relative_speed = vel_vec.square().sqrt();
-    let relative_position = pos_geo.dist();
+    let relative_position = pos_vec.square().sqrt();
 
     let gravitational_parameter = GRAVITY * 2.0;
     let specific_energy =
@@ -204,13 +205,12 @@ fn figure_eight_periodic_orbit() {
 
     let permutation = [2usize, 0, 1];
     for (i, &expected_index) in permutation.iter().enumerate() {
-        let &position_error =
-            Geometry::calculate_geometry(positions.value_at(i) - initial_positions[expected_index])
-                .dist();
-        let &velocity_error = Geometry::calculate_geometry(
-            velocities.value_at(i) - initial_velocities[expected_index],
-        )
-        .dist();
+        let position_error = (positions.value_at(i) - initial_positions[expected_index])
+            .square()
+            .sqrt();
+        let velocity_error = (velocities.value_at(i) - initial_velocities[expected_index])
+            .square()
+            .sqrt();
 
         assert!(
             position_error < tolerance,
@@ -233,10 +233,12 @@ fn figure_eight_periodic_orbit() {
 
     // assertions
     for i in 0..3 {
-        let &position_error =
-            Geometry::calculate_geometry(positions.value_at(i) - initial_positions[i]).dist();
-        let &velocity_error =
-            Geometry::calculate_geometry(velocities.value_at(i) - initial_velocities[i]).dist();
+        let position_error = (positions.value_at(i) - initial_positions[i])
+            .square()
+            .sqrt();
+        let velocity_error = (velocities.value_at(i) - initial_velocities[i])
+            .square()
+            .sqrt();
 
         assert!(
             position_error < tolerance,

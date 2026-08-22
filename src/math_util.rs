@@ -1,43 +1,197 @@
 //! Shared structure-of-arrays and numerical-accuracy utilities.
 
-use crate::math_util::vector3::Vector3;
-
 pub mod kahan;
-pub mod vector3;
 
-/// Pairwise geometric data.
-pub struct Geometry {
-    /// Relative displacement vector between two particles.
-    r_vec: Vector3,
-    /// Euclidean separation magnitude.
-    dist: f64,
-    /// Inverse cube of the separation magnitude.
-    inv_dist_cubed: f64,
+/// Three Cartesian components of a vector.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Vector3 {
+    /// X component.
+    pub x: f64,
+    /// Y component.
+    pub y: f64,
+    /// Z component.
+    pub z: f64,
 }
 
-impl Geometry {
-    /// Computes the relative geometry for one particle pair.
-    pub fn calculate_geometry(r_vec: Vector3) -> Self {
-        let dist_squared = r_vec.square();
-        let dist = dist_squared.sqrt();
-        let inv_dist_cubed = 1.0 / (dist_squared * dist);
+impl std::ops::Sub for Vector3 {
+    type Output = Vector3;
 
-        Geometry {
-            r_vec,
-            dist,
-            inv_dist_cubed,
+    fn sub(self, rhs: Vector3) -> Self::Output {
+        Vector3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+impl std::ops::Add for Vector3 {
+    type Output = Vector3;
+
+    fn add(self, rhs: Vector3) -> Self::Output {
+        Vector3 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl std::ops::Mul<f64> for Vector3 {
+    type Output = Vector3;
+
+    fn mul(self, factor: f64) -> Self::Output {
+        Vector3 {
+            x: self.x * factor,
+            y: self.y * factor,
+            z: self.z * factor,
+        }
+    }
+}
+
+impl std::ops::Div<f64> for Vector3 {
+    type Output = Vector3;
+
+    fn div(self, factor: f64) -> Self::Output {
+        self * (1.0 / factor)
+    }
+}
+
+impl Vector3 {
+    /// Returns the squared Euclidean norm of the vector.
+    pub fn square(&self) -> f64 {
+        self.x * self.x + self.y * self.y + self.z * self.z
+    }
+
+    pub fn norm(&self) -> f64 {
+        self.square().sqrt()
+    }
+
+    /// Returns the cross product of this vector with `rhs`.
+    pub fn cross(&self, rhs: &Vector3) -> Vector3 {
+        Vector3 {
+            x: self.y * rhs.z - self.z * rhs.y,
+            y: self.z * rhs.x - self.x * rhs.z,
+            z: self.x * rhs.y - self.y * rhs.x,
+        }
+    }
+}
+
+/// Three parallel scalar series representing Cartesian components of a vector.
+///
+/// The vectors are indexed in lockstep. Depending on the owner, an index may
+/// identify a particle or a recorded diagnostic sample.
+#[derive(Default, Clone)]
+pub struct Vector3Series {
+    /// X components.
+    pub x: Vec<f64>,
+    /// Y components.
+    pub y: Vec<f64>,
+    /// Z components.
+    pub z: Vec<f64>,
+}
+
+impl Vector3Series {
+    /// Creates a zero-filled series with one vector entry per index.
+    pub fn new_zeros(length: usize) -> Self {
+        Vector3Series {
+            x: vec![0.0; length],
+            y: vec![0.0; length],
+            z: vec![0.0; length],
         }
     }
 
-    pub fn r_vec(&self) -> &Vector3 {
-        &self.r_vec
+    /// Returns the vector stored at `idx`.
+    ///
+    /// This creates an entirely new structure, DO NOT USE IN FORCE EVALUATION
+    /// OR INTEGRATION. For diagnostic and testing API only.
+    pub fn value_at(&self, idx: usize) -> Vector3 {
+        Vector3 {
+            x: self.x[idx],
+            y: self.y[idx],
+            z: self.z[idx],
+        }
     }
 
-    pub fn dist(&self) -> &f64 {
-        &self.dist
+    /// Returns the number of stored vectors in the series.
+    pub fn len(&self) -> usize {
+        debug_assert_eq!(self.x.len(), self.y.len());
+        debug_assert_eq!(self.x.len(), self.z.len());
+
+        self.x.len()
     }
 
-    pub fn inv_dist_cubed(&self) -> &f64 {
-        &self.inv_dist_cubed
+    #[allow(unused)]
+    pub fn is_empty(&self) -> bool {
+        self.x.is_empty()
+    }
+
+    /// Appends one vector value to the end of the series.
+    pub fn push(&mut self, vector3: &Vector3) {
+        self.x.push(vector3.x);
+        self.y.push(vector3.y);
+        self.z.push(vector3.z);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::math_util::Vector3;
+
+    static LHS: Vector3 = Vector3 {
+        x: 3.0,
+        y: 4.0,
+        z: 0.0,
+    };
+    static RHS: Vector3 = Vector3 {
+        x: 4.0,
+        y: 5.0,
+        z: 6.0,
+    };
+
+    #[test]
+    fn test_add() {
+        assert_eq!(
+            LHS + RHS,
+            Vector3 {
+                x: 7.0,
+                y: 9.0,
+                z: 6.0,
+            }
+        )
+    }
+
+    #[test]
+    fn test_sub() {
+        assert_eq!(
+            LHS - RHS,
+            Vector3 {
+                x: -1.0,
+                y: -1.0,
+                z: -6.0,
+            }
+        )
+    }
+
+    #[test]
+    fn test_square() {
+        assert_eq!(LHS.square(), 25.0)
+    }
+
+    #[test]
+    fn test_norm() {
+        assert_eq!(LHS.norm(), 5.0)
+    }
+
+    #[test]
+    fn test_cross() {
+        assert_eq!(
+            LHS.cross(&RHS),
+            Vector3 {
+                x: 24.0,
+                y: -18.0,
+                z: -1.0,
+            }
+        )
     }
 }

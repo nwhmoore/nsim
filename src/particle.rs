@@ -1,6 +1,6 @@
 //! Particles in the simulation.
 
-use crate::math_util::vector3::{Vector3, Vector3Series};
+use crate::math_util::{Vector3, Vector3Series};
 
 /// Collection of particles stored as catalog metadata and simulation state.
 ///

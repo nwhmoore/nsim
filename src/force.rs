@@ -1,7 +1,7 @@
 //! Acceleration calculation and reusable storage.
 
 use crate::{
-    math_util::{kahan::KahanAccumulator, vector3::Vector3Series},
+    math_util::{Vector3Series, kahan::KahanAccumulator},
     particle::ParticleState,
 };
 
