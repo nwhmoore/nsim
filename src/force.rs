@@ -92,6 +92,7 @@ impl ForceBuffer {
 }
 
 /// Quantities calculated alongside one force evaluation.
+#[derive(Default)]
 pub struct ForceDiagnostics {
     /// Gravitational potential energy of the active massive bodies.
     pub potential_energy: f64,

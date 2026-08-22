@@ -87,3 +87,16 @@ impl Integrator for Leapfrog {
         force_evaluation
     }
 }
+
+pub struct NoIntegrator;
+
+impl Integrator for NoIntegrator {
+    fn evaluate_timestep(
+        &mut self,
+        _state: &mut ParticleState,
+        _forces: &mut ForceSystem,
+        _dt: f64,
+    ) -> ForceDiagnostics {
+        ForceDiagnostics::default()
+    }
+}

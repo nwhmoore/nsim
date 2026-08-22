@@ -126,7 +126,7 @@ impl<I: Integrator> Simulation<I> {
     }
 
     pub fn run_until(&mut self, end_time: f64) {
-        while self.current_time() + self.time.time_step < end_time {
+        while self.current_time() + self.time.time_step <= end_time {
             self.advance_one_step();
         }
     }
@@ -145,5 +145,60 @@ impl<I: Integrator> Simulation<I> {
 
     pub fn current_time(&self) -> f64 {
         self.time.current_time
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{integration::NoIntegrator, simulation::SimulationBuilder};
+
+    #[test]
+    fn run_until_runs_exact_number_of_complete_steps() {
+        let dt = 0.1;
+
+        let mut simulation = SimulationBuilder::new()
+            .use_integrator(NoIntegrator)
+            .set_time_step(dt)
+            .build()
+            .expect("simulation built");
+
+        simulation.run_until(1.0);
+
+        assert!(
+            (simulation.current_time() - 1.0).abs() < 1e-12,
+            "expected time 1.0, got {}",
+            simulation.current_time()
+        );
+    }
+
+    #[test]
+    fn run_until_does_not_exceed_end_time() {
+        let dt = 0.1;
+
+        let mut simulation = SimulationBuilder::new()
+            .use_integrator(NoIntegrator)
+            .set_time_step(dt)
+            .build()
+            .expect("simulation built");
+
+        simulation.run_until(1.05);
+
+        assert!(simulation.current_time() <= 1.05);
+        assert!((simulation.current_time() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn run_until_does_not_advance_past_end_time() {
+        let dt = 0.1;
+
+        let mut simulation = SimulationBuilder::new()
+            .use_integrator(NoIntegrator)
+            .set_time_step(dt)
+            .build()
+            .expect("simulation built");
+
+        simulation.run_until(0.05);
+
+        assert!((simulation.current_time() - 0.0).abs() < 1e-12);
     }
 }
