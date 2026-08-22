@@ -145,6 +145,10 @@ impl<I: Integrator> Simulation<I> {
     pub fn current_time(&self) -> f64 {
         self.time.current_time
     }
+
+    pub fn force_system(&self) -> &ForceSystem {
+        &self.forces
+    }
 }
 
 #[cfg(test)]

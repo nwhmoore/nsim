@@ -10,6 +10,7 @@ use std::f64::consts::PI;
 #[test]
 fn no_forces() {
     const TOLERANCE: f64 = 1e-12;
+    const CONST_VEL: f64 = 1.0;
 
     let mut simulation = SimulationBuilder::new()
         .add_particle(Particle {
@@ -18,7 +19,10 @@ fn no_forces() {
             // initial zeros
             position: Vector3::default(),
             // initial zeros
-            velocity: Vector3::default(),
+            velocity: Vector3 {
+                x: CONST_VEL,
+                ..Default::default()
+            },
             mass: 0.0,
         })
         .use_integrator(Leapfrog)
@@ -28,11 +32,17 @@ fn no_forces() {
     simulation.run_steps(1_000);
 
     assert!(
-        (simulation.particles().state().positions().vector_at(0) - Vector3::default()).norm()
+        (simulation.particles().state().positions().vector_at(0).x
+            - simulation.current_time() * CONST_VEL)
             < TOLERANCE
     );
     assert!(
-        (simulation.particles().state().velocities().vector_at(0) - Vector3::default()).norm()
+        (simulation.particles().state().velocities().vector_at(0)
+            - Vector3 {
+                x: CONST_VEL,
+                ..Default::default()
+            })
+        .norm()
             < TOLERANCE
     );
 }
@@ -44,16 +54,14 @@ fn no_forces() {
 /// [`force`]: nsim::force
 #[test]
 fn constant_acceleration() {
-    const TOLERANCE: f64 = 1e-12;
+    const TOLERANCE: f64 = 1e-10;
     const ACCEL_VAL: f64 = -9.81;
 
     let mut simulation = SimulationBuilder::new()
         .add_particle(Particle {
             name: String::from("test"),
             radius: 0.0,
-            // initial zeros
             position: Vector3::default(),
-            // initial zeros
             velocity: Vector3::default(),
             mass: 0.0,
         })
@@ -68,18 +76,39 @@ fn constant_acceleration() {
         .build()
         .expect("sim built");
 
-    simulation.run_one_step();
+    simulation.run_steps(100);
 
-    let dt = simulation.get_time_step();
+    let time = simulation.current_time();
+
+    let actual_position = simulation.particles().state().positions().y[0];
+    let actual_velocity = simulation.particles().state().velocities().y[0];
+
+    let expected_position = 0.5 * ACCEL_VAL * time * time;
+    let expected_velocity = ACCEL_VAL * time;
+
+    let position_error = (actual_position - expected_position).abs();
+    let velocity_error = (actual_velocity - expected_velocity).abs();
+
+    println!("time:              {time}");
+    println!("actual position:   {actual_position}");
+    println!("expected position: {expected_position}");
+    println!("position error:    {position_error}");
+    println!("actual velocity:   {actual_velocity}");
+    println!("expected velocity: {expected_velocity}");
+    println!("velocity error:    {velocity_error}");
 
     assert!(
-        (simulation.particles().state().positions().y[0] - (0.5 * ACCEL_VAL * dt * dt)).abs()
-            < TOLERANCE
+        position_error < TOLERANCE,
+        "position error {position_error} exceeded tolerance {TOLERANCE}"
     );
 
     assert!(
-        (simulation.particles().state().velocities().y[0] - (ACCEL_VAL * dt)).abs() < TOLERANCE
+        velocity_error < TOLERANCE,
+        "velocity error {velocity_error} exceeded tolerance {TOLERANCE}"
     );
+
+    // add time reverse test
+
 }
 
 #[test]

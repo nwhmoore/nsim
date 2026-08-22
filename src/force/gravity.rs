@@ -53,9 +53,9 @@ impl Force for NewtonianGravity {
 }
 
 #[derive(Clone)]
-pub struct CompensatedGravity;
+pub struct CompensatedNewtonianGravity;
 
-impl Force for CompensatedGravity {
+impl Force for CompensatedNewtonianGravity {
     fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = state.positions();
         let masses = state.masses();

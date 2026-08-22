@@ -45,9 +45,6 @@ fn two_body_conservation() {
         mass: 1.0,
     });
 
-    // let pos_geo = Geometry::calculate_geometry(
-    //     system.state().positions().value_at(0) - system.state().positions().value_at(1),
-    // );
     let pos_vec = system.state().positions().vector_at(0) - system.state().positions().vector_at(1);
     let vel_vec =
         system.state().velocities().vector_at(0) - system.state().velocities().vector_at(1);
@@ -75,11 +72,19 @@ fn two_body_conservation() {
         .build()
         .expect("simulation built");
 
+    let accels = &simulation.force_system().buffer().accelerations;
+
+    // equal and opposite accelerations
+    assert!((accels.vector_at(0) + accels.vector_at(1)).norm() < 1e-12);
+
     simulation.run_steps(steps_per_period);
 
     let diagnostics = simulation.diagnostics();
 
     let initial_linear_momentum = diagnostics.linear_momentum().vector_at(0);
+
+    assert!(initial_linear_momentum.norm() < 1e-12);
+
     let final_linear_momentum = diagnostics
         .linear_momentum()
         .vector_at(diagnostics.number_samples() - 1);
