@@ -51,8 +51,8 @@ fn two_body_conservation() {
     let pos_vec = system.state().positions().value_at(0) - system.state().positions().value_at(1);
     let vel_vec = system.state().velocities().value_at(0) - system.state().velocities().value_at(1);
 
-    let relative_speed = vel_vec.square().sqrt();
-    let relative_position = pos_vec.square().sqrt();
+    let relative_speed = vel_vec.norm();
+    let relative_position = pos_vec.norm();
 
     let gravitational_parameter = GRAVITY * 2.0;
     let specific_energy =
@@ -65,17 +65,16 @@ fn two_body_conservation() {
 
     // ------------------------------------------------------------------------
 
-    let mut simulation = SimulationBuilder::new_simulation()
+    let mut simulation = SimulationBuilder::new()
         .add_particle_system(system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
-        .set_end_time(one_period)
         .set_time_step(dt)
         .set_diagnostic_interval(one_period)
         .build()
         .expect("simulation built");
 
-    simulation.run();
+    simulation.run_steps(steps_per_period);
 
     let diagnostics = simulation.diagnostics();
 
@@ -134,6 +133,7 @@ fn figure_eight_periodic_orbit() {
 
     let period = published_period / (2.0 * PI);
     let steps_per_period = 120_000;
+    let steps_per_third_period = steps_per_period / 3;
     let dt = period / steps_per_period as f64;
 
     // initial conditions
@@ -186,16 +186,15 @@ fn figure_eight_periodic_orbit() {
         });
     }
 
-    let mut simulation = SimulationBuilder::new_simulation()
+    let mut simulation = SimulationBuilder::new()
         .add_particle_system(system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
-        .set_end_time(period / 3.0)
         .set_time_step(dt)
         .build()
         .expect("sim built");
 
-    simulation.run();
+    simulation.run_steps(steps_per_third_period);
 
     let positions = simulation.particles().state().positions();
     let velocities = simulation.particles().state().velocities();
@@ -225,20 +224,15 @@ fn figure_eight_periodic_orbit() {
         );
     }
 
-    simulation.set_end_time(period);
-    simulation.run();
+    simulation.run_steps(2 * steps_per_third_period);
 
     let positions = simulation.particles().state().positions();
     let velocities = simulation.particles().state().velocities();
 
     // assertions
     for i in 0..3 {
-        let position_error = (positions.value_at(i) - initial_positions[i])
-            .square()
-            .sqrt();
-        let velocity_error = (velocities.value_at(i) - initial_velocities[i])
-            .square()
-            .sqrt();
+        let position_error = (positions.value_at(i) - initial_positions[i]).norm();
+        let velocity_error = (velocities.value_at(i) - initial_velocities[i]).norm();
 
         assert!(
             position_error < tolerance,

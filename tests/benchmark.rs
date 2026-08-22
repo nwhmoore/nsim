@@ -93,16 +93,15 @@ fn solar_system(simulation_time: f64) {
     });
 
     let dt = 0.593; // 5% of jup period
-    let mut simulation = SimulationBuilder::new_simulation()
+    let mut simulation = SimulationBuilder::new()
         .add_particle_system(particle_system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
-        .set_end_time(simulation_time)
         .set_time_step(dt)
         .build()
         .expect("simulation built");
 
-    simulation.run();
+    simulation.run_until(simulation_time);
 }
 
 mod bench {

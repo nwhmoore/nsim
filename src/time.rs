@@ -3,7 +3,6 @@ use core::f64;
 #[derive(Clone)]
 pub struct Time {
     pub(crate) current_time: f64,
-    pub(crate) end_time: f64,
     pub(crate) time_step: f64,
     pub(crate) diagnostic_schedule: DiagnosticSchedule,
 }
@@ -12,7 +11,6 @@ impl Default for Time {
     fn default() -> Self {
         Self {
             current_time: 0.0,
-            end_time: 0.0,
             time_step: 0.001,
             diagnostic_schedule: DiagnosticSchedule::default(),
         }

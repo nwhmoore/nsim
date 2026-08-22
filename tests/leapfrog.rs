@@ -49,42 +49,38 @@ fn leapfrog_convergence() {
 
     // ------------------------------------------------------------------------
 
-    let ini_time_step = one_period * 0.01;
-    let all_time_steps = [
-        ini_time_step / 100.0,
-        ini_time_step / 200.0,
-        ini_time_step / 400.0,
-        ini_time_step / 800.0,
-        ini_time_step / 1_600.0,
-        ini_time_step / 3_200.0,
-    ];
-    let mut errors = Vec::with_capacity(all_time_steps.len());
+    let steps_per_periods = [10_000, 20_000, 40_000, 80_000, 160_000, 320_000];
 
-    let sim_builder = SimulationBuilder::new_simulation()
+    let all_time_steps = steps_per_periods
+        .iter()
+        .map(|&steps| one_period / steps as f64)
+        .collect::<Vec<_>>();
+
+    let mut errors = Vec::with_capacity(steps_per_periods.len());
+
+    let sim_builder = SimulationBuilder::new()
         .add_particle_system(initial_system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
-        .set_end_time(one_period)
         .set_diagnostic_interval(one_period);
 
-    for this_time_step in all_time_steps {
+    for (&step_per_period, &this_time_step) in steps_per_periods.iter().zip(all_time_steps.iter()) {
         let mut this_simulation = sim_builder
             .clone()
             .set_time_step(this_time_step)
             .build()
             .expect("simulation built");
 
-        this_simulation.run();
+        this_simulation.run_steps(step_per_period);
 
         let jup_position = this_simulation.particles().state().positions().value_at(1);
 
         let error = Vector3 {
             x: 5.0 - jup_position.x,
-            y: 0.0 - jup_position.y,
-            z: 0.0 - jup_position.z,
+            y: -jup_position.y,
+            z: -jup_position.z,
         }
-        .square()
-        .sqrt();
+        .norm();
         println!("error: {error:e}");
         errors.push(error);
     }

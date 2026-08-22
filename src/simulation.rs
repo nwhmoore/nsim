@@ -16,6 +16,12 @@ pub struct SimulationBuilder<I: Integrator = Leapfrog> {
     diagnostics: Diagnostics,
 }
 
+impl Default for SimulationBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<I: Integrator> SimulationBuilder<I> {
     pub fn build(self) -> Result<Simulation<I>, SimError> {
         let Some(integrator) = self.integrator else {
@@ -41,7 +47,7 @@ impl<I: Integrator> SimulationBuilder<I> {
         Ok(sim)
     }
 
-    pub fn new_simulation() -> Self {
+    pub fn new() -> Self {
         Self {
             particles: ParticleSystem::default(),
             time: Time::default(),
@@ -81,11 +87,6 @@ impl<I: Integrator> SimulationBuilder<I> {
         self.time.time_step = dt;
         self
     }
-
-    pub fn set_end_time(mut self, time: f64) -> Self {
-        self.time.end_time = time;
-        self
-    }
 }
 
 pub struct Simulation<I: Integrator = Leapfrog> {
@@ -118,10 +119,14 @@ impl<I: Integrator> Simulation<I> {
         }
     }
 
-    pub fn run(&mut self) {
-        let steps =
-            ((self.time.end_time - self.time.current_time) / self.time.time_step).round() as usize;
+    pub fn run_steps(&mut self, steps: usize) {
         for _ in 0..steps {
+            self.advance_one_step();
+        }
+    }
+
+    pub fn run_until(&mut self, end_time: f64) {
+        while self.current_time() + self.time.time_step < end_time {
             self.advance_one_step();
         }
     }
@@ -136,10 +141,6 @@ impl<I: Integrator> Simulation<I> {
 
     pub fn set_time_step(&mut self, dt: f64) {
         self.time.time_step = dt;
-    }
-
-    pub fn set_end_time(&mut self, time: f64) {
-        self.time.end_time = time;
     }
 
     pub fn current_time(&self) -> f64 {
