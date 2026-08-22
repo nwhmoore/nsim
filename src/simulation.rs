@@ -57,14 +57,13 @@ impl<I: Integrator> SimulationBuilder<I> {
         }
     }
 
-    pub fn add_particle(mut self, particle: Particle) -> Self {
-        self.particles.new_particle(particle);
+    pub fn with_particle_system(mut self, particle_system: ParticleSystem) -> Self {
+        self.particles = particle_system;
         self
     }
 
-    pub fn add_particle_system(mut self, particle_system: ParticleSystem) -> Self {
-        // TODO: append instead of truncate if not empty
-        self.particles = particle_system;
+    pub fn add_particle(mut self, particle: Particle) -> Self {
+        self.particles.new_particle(particle);
         self
     }
 

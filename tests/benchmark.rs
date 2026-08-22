@@ -94,7 +94,7 @@ fn solar_system(simulation_time: f64) {
 
     let dt = 0.593; // 5% of jup period
     let mut simulation = SimulationBuilder::new()
-        .add_particle_system(particle_system)
+        .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
         .set_time_step(dt)

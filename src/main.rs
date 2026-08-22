@@ -58,7 +58,7 @@ fn main() -> Result<(), SimError> {
     let end_time = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
 
     let mut simulation = SimulationBuilder::new()
-        .add_particle_system(particle_system)
+        .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
         .set_time_step(end_time * 0.01)

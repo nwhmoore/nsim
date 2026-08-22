@@ -59,7 +59,7 @@ fn leapfrog_convergence() {
     let mut errors = Vec::with_capacity(steps_per_periods.len());
 
     let sim_builder = SimulationBuilder::new()
-        .add_particle_system(initial_system)
+        .with_particle_system(initial_system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
         .set_diagnostic_interval(one_period);

@@ -66,7 +66,7 @@ fn two_body_conservation() {
     // ------------------------------------------------------------------------
 
     let mut simulation = SimulationBuilder::new()
-        .add_particle_system(system)
+        .with_particle_system(system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
         .set_time_step(dt)
@@ -187,7 +187,7 @@ fn figure_eight_periodic_orbit() {
     }
 
     let mut simulation = SimulationBuilder::new()
-        .add_particle_system(system)
+        .with_particle_system(system)
         .use_integrator(Leapfrog)
         .add_pairwise_force(NewtonianGravity)
         .set_time_step(dt)
