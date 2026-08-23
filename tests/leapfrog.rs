@@ -56,6 +56,7 @@ fn no_forces() {
 fn constant_acceleration() {
     const TOLERANCE: f64 = 1e-10;
     const ACCEL_VAL: f64 = -9.81;
+    const STEPS: usize = 100;
 
     let mut simulation = SimulationBuilder::new()
         .add_particle(Particle {
@@ -76,7 +77,7 @@ fn constant_acceleration() {
         .build()
         .expect("sim built");
 
-    simulation.run_steps(100);
+    simulation.run_steps(STEPS);
 
     let time = simulation.current_time();
 
@@ -89,6 +90,7 @@ fn constant_acceleration() {
     let position_error = (actual_position - expected_position).abs();
     let velocity_error = (actual_velocity - expected_velocity).abs();
 
+    println!("Constant Acceleration Test");
     println!("time:              {time}");
     println!("actual position:   {actual_position}");
     println!("expected position: {expected_position}");
@@ -107,8 +109,46 @@ fn constant_acceleration() {
         "velocity error {velocity_error} exceeded tolerance {TOLERANCE}"
     );
 
-    // add time reverse test
+    // Time reversibility
+    println!();
+    println!("=====================");
+    println!();
 
+    simulation.particles_mut().state_mut().velocities_mut().x[0] *= -1.0;
+    simulation.particles_mut().state_mut().velocities_mut().y[0] *= -1.0;
+    simulation.particles_mut().state_mut().velocities_mut().z[0] *= -1.0;
+
+    simulation.run_steps(STEPS);
+
+    let time = simulation.current_time();
+
+    let actual_position = simulation.particles().state().positions().y[0];
+    let actual_velocity = simulation.particles().state().velocities().y[0];
+
+    let expected_position = 0.0;
+    let expected_velocity = 0.0;
+
+    let position_error = (actual_position - expected_position).abs();
+    let velocity_error = (actual_velocity - expected_velocity).abs();
+
+    println!("Time Reversal Test");
+    println!("time:              {time}");
+    println!("actual position:   {actual_position}");
+    println!("expected position: {expected_position}");
+    println!("position error:    {position_error}");
+    println!("actual velocity:   {actual_velocity}");
+    println!("expected velocity: {expected_velocity}");
+    println!("velocity error:    {velocity_error}");
+
+    assert!(
+        position_error < TOLERANCE,
+        "position error {position_error} exceeded tolerance {TOLERANCE}"
+    );
+
+    assert!(
+        velocity_error < TOLERANCE,
+        "velocity error {velocity_error} exceeded tolerance {TOLERANCE}"
+    );
 }
 
 #[test]

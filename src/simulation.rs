@@ -134,6 +134,10 @@ impl<I: Integrator> Simulation<I> {
         &self.particles
     }
 
+    pub fn particles_mut(&mut self) -> &mut ParticleSystem {
+        &mut self.particles
+    }
+
     pub fn diagnostics(&self) -> &Diagnostics {
         &self.diagnostics
     }
