@@ -1,5 +1,3 @@
-use core::f64;
-
 #[derive(Clone)]
 pub struct Time {
     pub(crate) current_time: f64,

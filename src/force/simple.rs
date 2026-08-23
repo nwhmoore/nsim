@@ -24,8 +24,8 @@ impl Force for ConstantAccel {
 /// Applies harmonic oscillator potential a_i = -(k / m_i) (x_i - center)
 #[derive(Clone)]
 pub struct HarmonicPotential {
-    k: f64,
-    center: Vector3,
+    pub k: f64,
+    pub center: Vector3,
 }
 
 impl Force for HarmonicPotential {
