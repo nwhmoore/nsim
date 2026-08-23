@@ -132,18 +132,14 @@ fn two_body_conservation() {
 #[test]
 fn figure_eight_periodic_orbit() {
     // Published period for G = 1.
-    let published_period = 6.32591398;
+    let period = 6.32591398;
 
     //nsim gravity
-    assert!((GRAVITY - 4.0 * PI * PI).abs() < f64::EPSILON);
+    assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
 
-    let period = published_period / (2.0 * PI);
     let steps_per_period = 120_000;
     let steps_per_third_period = steps_per_period / 3;
     let dt = period / steps_per_period as f64;
-
-    // initial conditions
-    let velocity_scale = 2.0 * PI;
 
     let initial_positions = [
         Vector3 {
@@ -165,18 +161,18 @@ fn figure_eight_periodic_orbit() {
 
     let initial_velocities = [
         Vector3 {
-            x: 0.466203685 * velocity_scale,
-            y: 0.43236573 * velocity_scale,
+            x: 0.466203685,
+            y: 0.43236573,
             z: 0.0,
         },
         Vector3 {
-            x: 0.466203685 * velocity_scale,
-            y: 0.43236573 * velocity_scale,
+            x: 0.466203685,
+            y: 0.43236573,
             z: 0.0,
         },
         Vector3 {
-            x: -0.93240737 * velocity_scale,
-            y: -0.86473146 * velocity_scale,
+            x: -0.93240737,
+            y: -0.86473146,
             z: 0.0,
         },
     ];

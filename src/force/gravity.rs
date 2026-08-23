@@ -5,12 +5,12 @@ use crate::{
     math_util::kahan::Kahan3Series,
     particle::ParticleState,
 };
-use std::f64::consts::PI;
+// use std::f64::consts::PI;
 
-/// Gravitational constant in AU³ · year⁻² · solar-mass⁻¹.
-///
-/// The units of this constant currently set the units of the entire simulation.
-pub const GRAVITY: f64 = 4.0 * PI * PI;
+// /// The units of this constant currently set the units of the entire simulation.
+// pub const GRAVITY: f64 = 4.0 * PI * PI;
+
+pub const GRAVITY: f64 = 1.0;
 
 #[derive(Clone)]
 pub struct NewtonianGravity;
