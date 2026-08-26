@@ -20,7 +20,7 @@ fn main() -> Result<(), SimError> {
     // ---------------------------  INITIAL PARAMETERS ------------------------
     let mut particle_system = ParticleSystem::new_system();
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Sol"),
         radius: 1.0,
         position: Vector3 {
@@ -36,7 +36,7 @@ fn main() -> Result<(), SimError> {
         mass: 1.0,
     });
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Jupiter"),
         radius: 1.0,
         position: Vector3 {

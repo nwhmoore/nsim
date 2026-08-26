@@ -48,7 +48,7 @@ impl ParticleSystem {
     ///
     /// The particle's metadata and state are appended at the same index in
     /// their respective arrays.
-    pub fn new_particle(&mut self, particle: Particle) {
+    pub fn add_particle(&mut self, particle: Particle) {
         self.catalog.id.push(self.next_particle_id);
         self.next_particle_id += 1;
 

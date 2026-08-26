@@ -13,7 +13,7 @@ use std::f64::consts::PI;
 fn two_body_conservation() {
     let mut system = ParticleSystem::new_system();
 
-    system.new_particle(Particle {
+    system.add_particle(Particle {
         name: String::from("Sol"),
         radius: 0.0,
         position: Vector3 {
@@ -29,7 +29,7 @@ fn two_body_conservation() {
         mass: 1.0,
     });
 
-    system.new_particle(Particle {
+    system.add_particle(Particle {
         name: String::from("Jupiter"),
         radius: 0.0,
         position: Vector3 {
@@ -179,7 +179,7 @@ fn figure_eight_periodic_orbit() {
 
     let mut system = ParticleSystem::new_system();
     for i in 0..3 {
-        system.new_particle(Particle {
+        system.add_particle(Particle {
             name: format!("Body{i}"),
             radius: 0.0,
             position: initial_positions[i],

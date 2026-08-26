@@ -5,9 +5,11 @@ use crate::{
     particle::ParticleState,
 };
 
+mod drag;
 mod gravity;
 mod simple;
 
+pub use drag::*;
 pub use gravity::*;
 pub use simple::*;
 

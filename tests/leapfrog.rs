@@ -153,13 +153,15 @@ fn constant_acceleration() {
 
 #[test]
 fn leapfrog_convergence() {
+    const EXPECTED_ORDER: f64 = 2.0;
+    const ORDER_TOLERANCE: f64 = 0.1;
     // ---------------------------  INITIAL PARAMETERS ------------------------
 
     let one_period = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
 
     let mut initial_system = ParticleSystem::new_system();
 
-    initial_system.new_particle(Particle {
+    initial_system.add_particle(Particle {
         name: String::from("Sol"),
         radius: 1.0,
         position: Vector3 {
@@ -175,7 +177,7 @@ fn leapfrog_convergence() {
         mass: 1.0,
     });
 
-    initial_system.new_particle(Particle {
+    initial_system.add_particle(Particle {
         name: String::from("Jupiter"),
         radius: 1.0,
         position: Vector3 {
@@ -242,7 +244,7 @@ fn leapfrog_convergence() {
         / log_dt.iter().map(|x| (x - mean_x).powi(2)).sum::<f64>();
 
     assert!(
-        (slope - 2.0).abs() < 0.15,
+        (slope - EXPECTED_ORDER).abs() < ORDER_TOLERANCE,
         "convergence order {slope} not close to 2"
     )
 }

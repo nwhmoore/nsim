@@ -63,7 +63,7 @@ impl<I: Integrator> SimulationBuilder<I> {
     }
 
     pub fn add_particle(mut self, particle: Particle) -> Self {
-        self.particles.new_particle(particle);
+        self.particles.add_particle(particle);
         self
     }
 

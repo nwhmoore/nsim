@@ -56,6 +56,10 @@ impl Diagnostics {
         &self.angular_momentum
     }
 
+    pub fn kinetic_energy(&self) -> &[f64] {
+        &self.kinetic_energy
+    }
+
     pub fn total_energy(&self) -> &[f64] {
         &self.total_energy
     }
@@ -134,63 +138,5 @@ impl Diagnostics {
         debug_assert_eq!(self.number_samples(), self.angular_momentum.len());
         debug_assert_eq!(self.number_samples(), self.center_of_mass_position.len());
         debug_assert_eq!(self.number_samples(), self.center_of_mass_velocity.len());
-    }
-
-    pub fn validate_diagnostics(&self) -> std::io::Result<usize> {
-        let sample_count = self.number_samples();
-        if sample_count == 0 {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "empty self record",
-            ));
-        }
-
-        for (name, series_len) in [
-            ("total_mass", self.total_mass.len()),
-            ("kinetic_energy", self.kinetic_energy.len()),
-            ("grav_potential_energy", self.grav_potential_energy.len()),
-            ("total_energy", self.total_energy.len()),
-            ("linear_momentum", self.linear_momentum.len()),
-            ("angular_momentum", self.angular_momentum.len()),
-            (
-                "center_of_mass_position",
-                self.center_of_mass_position.len(),
-            ),
-            (
-                "center_of_mass_velocity",
-                self.center_of_mass_velocity.len(),
-            ),
-        ] {
-            if series_len != sample_count {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    format!("self series {name} has {series_len} samples; expected {sample_count}"),
-                ));
-            }
-        }
-
-        Ok(sample_count)
-    }
-
-    pub fn diagnostics_values_at(&self, sample_index: usize) -> [f64; 17] {
-        [
-            self.time[sample_index],
-            self.total_mass[sample_index],
-            self.kinetic_energy[sample_index],
-            self.grav_potential_energy[sample_index],
-            self.total_energy[sample_index],
-            self.linear_momentum.x[sample_index],
-            self.linear_momentum.y[sample_index],
-            self.linear_momentum.z[sample_index],
-            self.angular_momentum.x[sample_index],
-            self.angular_momentum.y[sample_index],
-            self.angular_momentum.z[sample_index],
-            self.center_of_mass_position.x[sample_index],
-            self.center_of_mass_position.y[sample_index],
-            self.center_of_mass_position.z[sample_index],
-            self.center_of_mass_velocity.x[sample_index],
-            self.center_of_mass_velocity.y[sample_index],
-            self.center_of_mass_velocity.z[sample_index],
-        ]
     }
 }

@@ -12,7 +12,7 @@ fn solar_system(simulation_time: f64) {
     let mut particle_system = ParticleSystem::new_system();
     let velocity_scale = 365.2425;
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Sol"),
         radius: 0.0,
         position: Vector3 {
@@ -28,7 +28,7 @@ fn solar_system(simulation_time: f64) {
         mass: 1.0,
     });
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Jupiter"),
         radius: 0.0,
         position: Vector3 {
@@ -44,7 +44,7 @@ fn solar_system(simulation_time: f64) {
         mass: 9.547919384243222e-4,
     });
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Saturn"),
         radius: 0.0,
         position: Vector3 {
@@ -60,7 +60,7 @@ fn solar_system(simulation_time: f64) {
         mass: 2.858859806661029e-4,
     });
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Uranus"),
         radius: 0.0,
         position: Vector3 {
@@ -76,7 +76,7 @@ fn solar_system(simulation_time: f64) {
         mass: 4.3662440433515637e-5,
     });
 
-    particle_system.new_particle(Particle {
+    particle_system.add_particle(Particle {
         name: String::from("Neptune"),
         radius: 0.0,
         position: Vector3 {
