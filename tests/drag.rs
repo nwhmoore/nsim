@@ -114,7 +114,7 @@ fn linear_drag_causes_exponential_velocity_decay() {
 }
 
 #[test]
-fn gravity_and_drag() {
+fn gravity_and_drag_inspiral_binary() {
     let mut system = ParticleSystem::new_system();
 
     let particle1_mass = 1.0;
@@ -172,8 +172,29 @@ fn gravity_and_drag() {
 
     simulation.run_steps((orbital_period / dt).round() as usize);
 
-    let initial_kinetic_energy = simulation.diagnostics().kinetic_energy()[0];
-    let final_kinetic_energy = simulation.diagnostics().kinetic_energy()[1];
+    // particles move to smaller orbit, inner orbits have higher orbital velocity so KE actually goes up here.
+    // let initial_kinetic_energy = simulation.diagnostics().kinetic_energy()[0];
+    // let final_kinetic_energy = simulation.diagnostics().kinetic_energy()[1];
+
+    // println!("Initial kinetic energy: {initial_kinetic_energy}");
+    // println!("Final kinetic energy: {final_kinetic_energy}");
+    // println!();
+
+    // assert!(
+    //     final_kinetic_energy < initial_kinetic_energy,
+    //     "Drag should reduce kinetic energy"
+    // );
+
+    let initial_angular_momentum = simulation
+        .diagnostics()
+        .angular_momentum()
+        .vector_at(0)
+        .norm();
+    let final_angular_momentum = simulation
+        .diagnostics()
+        .angular_momentum()
+        .vector_at(1)
+        .norm();
 
     let initial_total_energy = simulation.diagnostics().total_energy()[0];
     let final_total_energy = simulation.diagnostics().total_energy()[1];
@@ -182,13 +203,13 @@ fn gravity_and_drag() {
         - simulation.particles().state().positions().vector_at(1))
     .norm();
 
-    println!("Initial kinetic energy: {initial_kinetic_energy}");
-    println!("Final kinetic energy: {final_kinetic_energy}");
+    println!("Initial angular momentum: {initial_angular_momentum}");
+    println!("Final angular momentum: {final_angular_momentum}");
     println!();
 
     assert!(
-        final_kinetic_energy < initial_kinetic_energy,
-        "Drag should reduce kinetic energy"
+        final_angular_momentum < initial_angular_momentum,
+        "Drag should reduce angular momentum"
     );
 
     println!("Initial total energy: {initial_total_energy}");
