@@ -37,11 +37,14 @@ impl<I: Integrator> SimulationBuilder<I> {
             diagnostics: self.diagnostics,
         };
 
-        let initial_evaluation = sim.forces.evaluate(sim.particles.state());
-        sim.diagnostics.record(
+        // pre-allocate the force buffer
+        sim.forces.evaluate(sim.particles.state());
+
+        // record initial state
+        sim.diagnostics.record_current_state(
             sim.time.current_time,
             sim.particles.state(),
-            initial_evaluation.potential_energy,
+            sim.forces.configured_forces(),
         );
 
         Ok(sim)
@@ -98,7 +101,7 @@ pub struct Simulation<I: Integrator = Leapfrog> {
 
 impl<I: Integrator> Simulation<I> {
     pub fn run_one_step(&mut self) {
-        let force_evaluation = self.integrator.evaluate_timestep(
+        self.integrator.evaluate_timestep(
             self.particles.state_mut(),
             &mut self.forces,
             self.time.time_step,
@@ -107,10 +110,10 @@ impl<I: Integrator> Simulation<I> {
         self.time.current_time += self.time.time_step;
 
         if self.time.current_time >= self.time.diagnostic_schedule.next_diagnostic_record {
-            self.diagnostics.record(
+            self.diagnostics.record_current_state(
                 self.time.current_time,
                 self.particles.state(),
-                force_evaluation.potential_energy,
+                self.forces.configured_forces(),
             );
 
             self.time.diagnostic_schedule.next_diagnostic_record +=

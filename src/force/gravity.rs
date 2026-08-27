@@ -2,7 +2,7 @@
 
 use crate::{
     force::{Force, ForceEvaluation},
-    math_util::kahan::Kahan3Series,
+    math_util::kahan::{Kahan3Series, KahanAccumulator},
     particle::ParticleState,
 };
 // use std::f64::consts::PI;
@@ -43,12 +43,33 @@ impl Force for NewtonianGravity {
                 output.accelerations.x[j] += dx * scale_j;
                 output.accelerations.y[j] += dy * scale_j;
                 output.accelerations.z[j] += dz * scale_j;
-
-                output
-                    .potential_energy
-                    .add(-GRAVITY * masses[i] * masses[j] * inv_r)
             }
         }
+    }
+
+    fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
+        let positions = state.positions();
+        let masses = state.masses();
+        let n = state.particle_count();
+
+        let mut potential_energy = KahanAccumulator::default();
+
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let dx = positions.x[i] - positions.x[j];
+                let dy = positions.y[i] - positions.y[j];
+                let dz = positions.z[i] - positions.z[j];
+
+                let r2 = dx * dx + dy * dy + dz * dz;
+                // TODO: make an explicit collision policy
+                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                let inv_r = r2.sqrt().recip();
+
+                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r)
+            }
+        }
+
+        Some(potential_energy.total())
     }
 }
 
@@ -85,14 +106,35 @@ impl Force for CompensatedNewtonianGravity {
                 accumulator.x[j].add(dx * scale_j);
                 accumulator.y[j].add(dy * scale_j);
                 accumulator.z[j].add(dz * scale_j);
-
-                output
-                    .potential_energy
-                    .add(-GRAVITY * masses[i] * masses[j] * inv_r)
             }
             output.accelerations.x[i] = accumulator.x[i].total();
             output.accelerations.y[i] = accumulator.y[i].total();
             output.accelerations.z[i] = accumulator.z[i].total();
         }
+    }
+
+    fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
+        let positions = state.positions();
+        let masses = state.masses();
+        let n = state.particle_count();
+
+        let mut potential_energy = KahanAccumulator::default();
+
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let dx = positions.x[i] - positions.x[j];
+                let dy = positions.y[i] - positions.y[j];
+                let dz = positions.z[i] - positions.z[j];
+
+                let r2 = dx * dx + dy * dy + dz * dz;
+                // TODO: make an explicit collision policy
+                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                let inv_r = r2.sqrt().recip();
+
+                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r)
+            }
+        }
+
+        Some(potential_energy.total())
     }
 }

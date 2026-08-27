@@ -187,17 +187,17 @@ fn gravity_and_drag_inspiral_binary() {
 
     let initial_angular_momentum = simulation
         .diagnostics()
+        .get_sample(0)
         .angular_momentum()
-        .vector_at(0)
         .norm();
     let final_angular_momentum = simulation
         .diagnostics()
+        .get_sample(1)
         .angular_momentum()
-        .vector_at(1)
         .norm();
 
-    let initial_total_energy = simulation.diagnostics().total_energy()[0];
-    let final_total_energy = simulation.diagnostics().total_energy()[1];
+    let initial_total_energy = simulation.diagnostics().get_sample(0).total_energy();
+    let final_total_energy = simulation.diagnostics().get_sample(1).total_energy();
 
     let final_distance = (simulation.particles().state().positions().vector_at(0)
         - simulation.particles().state().positions().vector_at(1))

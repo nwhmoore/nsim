@@ -66,15 +66,6 @@ impl Vector3 {
     pub fn norm(&self) -> f64 {
         self.square().sqrt()
     }
-
-    /// Returns the cross product of this vector with `rhs`.
-    pub fn cross(&self, rhs: &Vector3) -> Vector3 {
-        Vector3 {
-            x: self.y * rhs.z - self.z * rhs.y,
-            y: self.z * rhs.x - self.x * rhs.z,
-            z: self.x * rhs.y - self.y * rhs.x,
-        }
-    }
 }
 
 /// Three parallel scalar series representing Cartesian components of a vector.
@@ -181,17 +172,5 @@ mod test {
     #[test]
     fn test_norm() {
         assert_eq!(LHS.norm(), 5.0)
-    }
-
-    #[test]
-    fn test_cross() {
-        assert_eq!(
-            LHS.cross(&RHS),
-            Vector3 {
-                x: 24.0,
-                y: -18.0,
-                z: -1.0,
-            }
-        )
     }
 }

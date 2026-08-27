@@ -5,18 +5,10 @@
 //! before the first timestep. Each completed timestep leaves the buffer ready
 //! for the next timestep.
 
-use crate::{
-    force::{ForceDiagnostics, ForceSystem},
-    particle::ParticleState,
-};
+use crate::{force::ForceSystem, particle::ParticleState};
 
 pub trait Integrator {
-    fn evaluate_timestep(
-        &mut self,
-        state: &mut ParticleState,
-        forces: &mut ForceSystem,
-        dt: f64,
-    ) -> ForceDiagnostics;
+    fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64);
 }
 
 #[derive(Clone)]
@@ -47,12 +39,7 @@ impl Integrator for Leapfrog {
     ///
     /// This function may panic if the state and force-buffer component vectors do
     /// not have matching lengths.
-    fn evaluate_timestep(
-        &mut self,
-        state: &mut ParticleState,
-        forces: &mut ForceSystem,
-        dt: f64,
-    ) -> ForceDiagnostics {
+    fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64) {
         let n = state.particle_count();
         let half_dt = 0.5 * dt;
 
@@ -71,7 +58,7 @@ impl Integrator for Leapfrog {
             }
         }
 
-        let force_evaluation = forces.evaluate(state);
+        forces.evaluate(state);
 
         {
             let accelerations = forces.buffer().accelerations();
@@ -83,8 +70,6 @@ impl Integrator for Leapfrog {
                 velocities.z[i] += accelerations.z[i] * half_dt;
             }
         }
-
-        force_evaluation
     }
 }
 
@@ -96,7 +81,6 @@ impl Integrator for NoIntegrator {
         _state: &mut ParticleState,
         _forces: &mut ForceSystem,
         _dt: f64,
-    ) -> ForceDiagnostics {
-        ForceDiagnostics::default()
+    ) {
     }
 }

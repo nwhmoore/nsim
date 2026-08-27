@@ -1,6 +1,6 @@
 use crate::{
     force::{Force, ForceEvaluation},
-    math_util::Vector3,
+    math_util::{Vector3, kahan::KahanAccumulator},
     particle::ParticleState,
 };
 
@@ -44,10 +44,25 @@ impl Force for HarmonicPotential {
             output.accelerations.x[i] += dx * scale;
             output.accelerations.y[i] += dy * scale;
             output.accelerations.z[i] += dz * scale;
-
-            output
-                .potential_energy
-                .add(0.5 * self.k * (dx * dx + dy * dy + dz * dz))
         }
+    }
+
+    fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
+        let positions = state.positions();
+        let n = state.particle_count();
+
+        let mut potential_energy = KahanAccumulator::default();
+
+        for i in 0..n {
+            let dx = positions.x[i] - self.center.x;
+            let dy = positions.y[i] - self.center.y;
+            let dz = positions.z[i] - self.center.z;
+
+            let r2 = dx * dx + dy * dy + dz * dz;
+
+            potential_energy.add(0.5 * self.k * r2)
+        }
+
+        Some(potential_energy.total())
     }
 }

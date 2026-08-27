@@ -81,27 +81,29 @@ fn two_body_conservation() {
 
     let diagnostics = simulation.diagnostics();
 
-    let initial_linear_momentum = diagnostics.linear_momentum().vector_at(0);
+    let initial_linear_momentum = diagnostics.get_sample(0).linear_momentum();
 
     assert!(initial_linear_momentum.norm() < 1e-12);
 
     let final_linear_momentum = diagnostics
-        .linear_momentum()
-        .vector_at(diagnostics.number_samples() - 1);
+        .get_sample(diagnostics.number_samples() - 1)
+        .linear_momentum();
     let change_in_linear_momentum = (final_linear_momentum - initial_linear_momentum)
         .square()
         .sqrt();
 
-    let initial_angular_momentum = diagnostics.angular_momentum().vector_at(0);
+    let initial_angular_momentum = diagnostics.get_sample(0).angular_momentum();
     let final_angular_momentum = diagnostics
-        .angular_momentum()
-        .vector_at(diagnostics.number_samples() - 1);
+        .get_sample(diagnostics.number_samples() - 1)
+        .angular_momentum();
     let change_in_angular_momentum = (final_angular_momentum - initial_angular_momentum)
         .square()
         .sqrt();
 
-    let initial_energy = diagnostics.total_energy()[0];
-    let final_energy = diagnostics.total_energy()[diagnostics.number_samples() - 1];
+    let initial_energy = diagnostics.get_sample(0).total_energy();
+    let final_energy = diagnostics
+        .get_sample(diagnostics.number_samples() - 1)
+        .total_energy();
     let relative_change_in_energy = (final_energy - initial_energy).abs() / initial_energy.abs();
 
     // test tolerances

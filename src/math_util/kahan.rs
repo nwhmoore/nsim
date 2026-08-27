@@ -1,3 +1,5 @@
+use std::f64;
+
 use crate::math_util::Vector3;
 
 /// Accumulates a sum while tracking the rounding error introduced by `f64`
@@ -44,10 +46,10 @@ pub struct Kahan3 {
 
 impl Kahan3 {
     /// Adds one vector-valued sample to the compensated total in each axis.
-    pub fn add(&mut self, value: &Vector3) {
-        self.x.add(value.x);
-        self.y.add(value.y);
-        self.z.add(value.z);
+    pub fn add(&mut self, x: f64, y: f64, z: f64) {
+        self.x.add(x);
+        self.y.add(y);
+        self.z.add(z);
     }
 
     /// Returns the compensated total for the X, Y, and Z components.

@@ -1,9 +1,6 @@
 //! Acceleration calculation and reusable storage.
 
-use crate::{
-    math_util::{Vector3Series, kahan::KahanAccumulator},
-    particle::ParticleState,
-};
+use crate::{math_util::Vector3Series, particle::ParticleState};
 
 mod drag;
 mod gravity;
@@ -15,7 +12,7 @@ pub use simple::*;
 
 #[derive(Default, Clone)]
 pub struct ForceConfiguration {
-    pairwise: Vec<Box<dyn Force>>,
+    forces: Vec<Box<dyn Force>>,
 }
 
 impl ForceConfiguration {
@@ -23,7 +20,7 @@ impl ForceConfiguration {
     where
         F: Force + 'static,
     {
-        self.pairwise.push(Box::new(force));
+        self.forces.push(Box::new(force));
     }
 }
 
@@ -40,35 +37,37 @@ impl ForceSystem {
         }
     }
 
-    pub fn evaluate(&mut self, particle_state: &ParticleState) -> ForceDiagnostics {
+    pub fn evaluate(&mut self, particle_state: &ParticleState) {
         self.buffer.clear();
 
         let mut output = ForceEvaluation {
             accelerations: &mut self.buffer.accelerations,
-            potential_energy: KahanAccumulator::default(),
         };
 
-        for force in &self.configuration.pairwise {
+        for force in &self.configuration.forces {
             force.evaluate(particle_state, &mut output);
-        }
-
-        ForceDiagnostics {
-            potential_energy: output.potential_energy.total(),
         }
     }
 
     pub fn buffer(&self) -> &ForceBuffer {
         &self.buffer
     }
+
+    pub fn configured_forces(&self) -> &[Box<dyn Force>] {
+        &self.configuration.forces
+    }
 }
 
 pub trait Force: ForceClone {
     fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>);
+
+    fn calculate_potential_energy(&self, _particle_state: &ParticleState) -> Option<f64> {
+        None
+    }
 }
 
 pub struct ForceEvaluation<'a> {
     pub accelerations: &'a mut Vector3Series,
-    pub potential_energy: KahanAccumulator,
 }
 
 pub struct ForceBuffer {
@@ -93,13 +92,6 @@ impl ForceBuffer {
     pub fn accelerations(&self) -> &Vector3Series {
         &self.accelerations
     }
-}
-
-/// Quantities calculated alongside one force evaluation.
-#[derive(Default)]
-pub struct ForceDiagnostics {
-    /// Gravitational potential energy of the active massive bodies.
-    pub potential_energy: f64,
 }
 
 pub trait ForceClone {
