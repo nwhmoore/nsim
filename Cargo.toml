@@ -4,3 +4,10 @@ version = "0.0.1"
 edition = "2024"
 
 [dependencies]
+
+[dev-dependencies]
+criterion = "0.7"
+
+[[bench]]
+name = "outer_solar_system"
+harness = false

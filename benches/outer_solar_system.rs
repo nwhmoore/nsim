@@ -1,15 +1,13 @@
-#![feature(test)]
-
 use nsim::{
     force::{GRAVITY, NewtonianGravity},
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
-    simulation::SimulationBuilder,
+    simulation::{Simulation, SimulationBuilder},
 };
 use std::f64::consts::PI;
 
-fn solar_system(simulation_time: f64) {
+fn solar_system() -> Simulation {
     //nsim gravity
     debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
     let mut particle_system = ParticleSystem::new_system();
@@ -97,28 +95,32 @@ fn solar_system(simulation_time: f64) {
     });
 
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
-    let mut simulation = SimulationBuilder::new()
+    SimulationBuilder::new()
         .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
         .build()
-        .expect("simulation built");
-
-    // `simulation_time` is given in years
-    simulation.run_until(simulation_time * 2.0 * PI);
+        .expect("simulation built")
 }
 
-mod bench {
-    extern crate test;
-    use crate::solar_system;
-    use test::Bencher;
+/// Length of simulation (currently in years)
+const SIMULATION_YEARS: f64 = 4e4;
+const SIMULATION_TIME: f64 = SIMULATION_YEARS * 2.0 * PI;
 
-    /// Length of simulation (currently in years)
-    const SIMULATION_TIME: f64 = 4e4;
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
-    #[bench]
-    fn bench_solar_system(b: &mut Bencher) {
-        b.iter(|| solar_system(SIMULATION_TIME))
-    }
+fn bench_solar_system(c: &mut Criterion) {
+    c.bench_function("solar_system", |b| {
+        b.iter_batched(
+            solar_system,
+            |mut simulation| {
+                simulation.run_until(SIMULATION_TIME);
+            },
+            BatchSize::SmallInput,
+        );
+    });
 }
+
+criterion_group!(benches, bench_solar_system);
+criterion_main!(benches);
