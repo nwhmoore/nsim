@@ -1,16 +1,20 @@
 #![feature(test)]
 
 use nsim::{
-    force::NewtonianGravity,
+    force::{GRAVITY, NewtonianGravity},
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
     simulation::SimulationBuilder,
 };
+use std::f64::consts::PI;
 
 fn solar_system(simulation_time: f64) {
+    //nsim gravity
+    debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
     let mut particle_system = ParticleSystem::new_system();
-    let velocity_scale = 365.2425;
+    // given velocites are in AU/day so we convert
+    let velocity_scale = 365.2425 / (2.0 * PI);
 
     particle_system.add_particle(Particle {
         name: String::from("Sol"),
@@ -92,7 +96,7 @@ fn solar_system(simulation_time: f64) {
         mass: 5.151389020535497e-5,
     });
 
-    let dt = 0.593; // 5% of jup period
+    let dt = 0.593 * 2.0 * PI; // 5% of jup period
     let mut simulation = SimulationBuilder::new()
         .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
@@ -101,7 +105,8 @@ fn solar_system(simulation_time: f64) {
         .build()
         .expect("simulation built");
 
-    simulation.run_until(simulation_time);
+    // `simulation_time` is given in years
+    simulation.run_until(simulation_time * 2.0 * PI);
 }
 
 mod bench {
@@ -109,7 +114,7 @@ mod bench {
     use crate::solar_system;
     use test::Bencher;
 
-    /// Length of simulation (currently in years, set by G)
+    /// Length of simulation (currently in years)
     const SIMULATION_TIME: f64 = 4e4;
 
     #[bench]
