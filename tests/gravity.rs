@@ -81,29 +81,23 @@ fn two_body_conservation() {
 
     let diagnostics = simulation.diagnostics();
 
-    let initial_linear_momentum = diagnostics.get_sample(0).linear_momentum();
+    let initial_linear_momentum = diagnostics.records().first().unwrap().linear_momentum();
 
     assert!(initial_linear_momentum.norm() < 1e-12);
 
-    let final_linear_momentum = diagnostics
-        .get_sample(diagnostics.number_samples() - 1)
-        .linear_momentum();
+    let final_linear_momentum = diagnostics.records().last().unwrap().linear_momentum();
     let change_in_linear_momentum = (final_linear_momentum - initial_linear_momentum)
         .square()
         .sqrt();
 
-    let initial_angular_momentum = diagnostics.get_sample(0).angular_momentum();
-    let final_angular_momentum = diagnostics
-        .get_sample(diagnostics.number_samples() - 1)
-        .angular_momentum();
+    let initial_angular_momentum = diagnostics.records().first().unwrap().angular_momentum();
+    let final_angular_momentum = diagnostics.records().last().unwrap().angular_momentum();
     let change_in_angular_momentum = (final_angular_momentum - initial_angular_momentum)
         .square()
         .sqrt();
 
-    let initial_energy = diagnostics.get_sample(0).total_energy();
-    let final_energy = diagnostics
-        .get_sample(diagnostics.number_samples() - 1)
-        .total_energy();
+    let initial_energy = diagnostics.records().first().unwrap().total_energy();
+    let final_energy = diagnostics.records().last().unwrap().total_energy();
     let relative_change_in_energy = (final_energy - initial_energy).abs() / initial_energy.abs();
 
     // test tolerances

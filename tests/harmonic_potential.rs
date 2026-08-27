@@ -144,3 +144,74 @@ fn harmonic_potential_matches_quarter_period_solution() {
         velocity.z
     );
 }
+
+#[test]
+fn harmonic_potential_conserves_energy_and_angular_momentum() {
+    let mass = 1.0;
+    let k = 1.0;
+    let center = Vector3 {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
+
+    // For m = k = 1:
+    //
+    // omega = sqrt(k / m) = 1
+    // period = 2π
+    //
+    // Choose an initial state with both x and y components so that
+    // angular momentum is non-zero.
+    let initial_position = Vector3 {
+        x: 1.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    let initial_velocity = Vector3 {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+    };
+
+    let period = 2.0 * PI;
+    let dt = period * 0.001;
+
+    let mut simulation = SimulationBuilder::new()
+        .add_particle(Particle {
+            name: String::from("test"),
+            radius: 0.0,
+            position: initial_position,
+            velocity: initial_velocity,
+            mass,
+        })
+        .add_force(HarmonicPotential { center, k })
+        .use_integrator(Leapfrog)
+        .set_time_step(dt)
+        .build()
+        .expect("sim built");
+
+    simulation.run_until(period);
+
+    let initial = simulation.diagnostics().records().first().unwrap();
+    let final_record = simulation.diagnostics().records().last().unwrap();
+
+    let initial_energy = initial.total_energy();
+    let final_energy = final_record.total_energy();
+
+    let initial_angular_momentum = initial.angular_momentum();
+    let final_angular_momentum = final_record.angular_momentum();
+
+    let relative_energy_error = (final_energy - initial_energy).abs() / initial_energy.abs();
+
+    let angular_momentum_error = (final_angular_momentum - initial_angular_momentum).norm();
+
+    assert!(
+        relative_energy_error < 1e-6,
+        "relative energy error: {relative_energy_error:e}"
+    );
+
+    assert!(
+        angular_momentum_error < 1e-6,
+        "angular momentum error: {angular_momentum_error:e}"
+    );
+}
