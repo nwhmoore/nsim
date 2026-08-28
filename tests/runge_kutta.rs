@@ -152,7 +152,7 @@ fn constant_acceleration() {
 }
 
 #[test]
-fn runge_kutta_convergence() {
+fn runge_kutta_convergence_and_time_reversibility() {
     const EXPECTED_ORDER: f64 = 4.0;
     const ORDER_TOLERANCE: f64 = 0.1;
     // ---------------------------  INITIAL PARAMETERS ------------------------

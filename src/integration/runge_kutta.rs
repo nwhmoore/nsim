@@ -113,6 +113,7 @@ struct RK4Stage {
 impl RK4Stage {
     fn new(n: usize) -> Self {
         RK4Stage {
+            // TODO: Remove this field to avoid extra allocation/ copying
             dr: Vector3Series::new_with_zeros(n),
             dv: Vector3Series::new_with_zeros(n),
         }
