@@ -72,7 +72,7 @@ fn two_body_conservation() {
         .build()
         .expect("simulation built");
 
-    let accels = &simulation.force_system().buffer().accelerations;
+    let accels = &simulation.force_system().buffer().accelerations();
 
     // equal and opposite accelerations
     assert!((accels.vector_at(0) + accels.vector_at(1)).norm() < 1e-12);

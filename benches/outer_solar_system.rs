@@ -110,7 +110,7 @@ const SIMULATION_TIME: f64 = SIMULATION_YEARS * 2.0 * PI;
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 
-fn bench_solar_system(c: &mut Criterion) {
+fn bench_solar_system_leapfrog(c: &mut Criterion) {
     c.bench_function("solar_system", |b| {
         b.iter_batched(
             solar_system,
@@ -122,5 +122,7 @@ fn bench_solar_system(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_solar_system);
+// TODO: Benchmark RK4
+
+criterion_group!(benches, bench_solar_system_leapfrog);
 criterion_main!(benches);

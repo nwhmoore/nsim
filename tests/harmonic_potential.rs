@@ -38,9 +38,15 @@ fn harmonic_potential_evaluates_expected_acceleration() {
         .build()
         .expect("sim built");
 
-    assert_eq!(simulation.force_system().buffer().accelerations.x[0], -12.0);
-    assert_eq!(simulation.force_system().buffer().accelerations.y[0], 8.0);
-    assert_eq!(simulation.force_system().buffer().accelerations.z[0], -24.0);
+    assert_eq!(
+        simulation.force_system().buffer().accelerations().x[0],
+        -12.0
+    );
+    assert_eq!(simulation.force_system().buffer().accelerations().y[0], 8.0);
+    assert_eq!(
+        simulation.force_system().buffer().accelerations().z[0],
+        -24.0
+    );
 }
 
 #[test]

@@ -84,7 +84,7 @@ pub struct Vector3Series {
 
 impl Vector3Series {
     /// Creates a zero-filled series with one vector entry per index.
-    pub fn new_zeros(length: usize) -> Self {
+    pub fn new_with_zeros(length: usize) -> Self {
         Vector3Series {
             x: vec![0.0; length],
             y: vec![0.0; length],
@@ -92,6 +92,13 @@ impl Vector3Series {
         }
     }
 
+    pub fn with_capacity(capacity: usize) -> Self {
+        Vector3Series {
+            x: Vec::with_capacity(capacity),
+            y: Vec::with_capacity(capacity),
+            z: Vec::with_capacity(capacity),
+        }
+    }
     /// Returns the vector stored at `idx`.
     ///
     /// This creates an entirely new structure, DO NOT USE IN FORCE EVALUATION

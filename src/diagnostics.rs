@@ -38,9 +38,8 @@ impl Diagnostics {
         let positions = particle_state.positions();
         let velocities = particle_state.velocities();
         let masses = particle_state.masses();
-        let n = particle_state.particle_count();
 
-        for i in 0..n {
+        for (i, &mass) in masses.iter().enumerate() {
             let rx = positions.x[i];
             let ry = positions.y[i];
             let rz = positions.z[i];
@@ -49,14 +48,12 @@ impl Diagnostics {
             let vy = velocities.y[i];
             let vz = velocities.z[i];
 
-            let mass = masses[i];
             total_mass.add(mass);
 
             kinetic_energy.add(0.5 * mass * (vx * vx + vy * vy + vz * vz));
 
             linear_momentum.add(vx * mass, vy * mass, vz * mass);
 
-            // angular_momentum.add(&(position.cross(&velocity) * mass));
             angular_momentum.add(
                 mass * (ry * vz - rz * vy),
                 mass * (rz * vx - rx * vz),

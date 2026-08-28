@@ -24,10 +24,11 @@ impl Default for SimulationBuilder {
 
 impl<I: Integrator> SimulationBuilder<I> {
     pub fn build(self) -> Result<Simulation<I>, SimError> {
-        let Some(integrator) = self.integrator else {
+        let Some(mut integrator) = self.integrator else {
             return Err(SimError::MissingIntegrator);
         };
         let particle_count = self.particles.particle_count();
+        integrator.initialize(self.particles.state());
 
         let mut sim = Simulation {
             particles: self.particles,
@@ -70,6 +71,7 @@ impl<I: Integrator> SimulationBuilder<I> {
         self
     }
 
+    // TODO: examine RK4 api
     pub fn use_integrator(mut self, integrator: I) -> Self {
         self.integrator = Some(integrator);
         self

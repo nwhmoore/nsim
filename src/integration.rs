@@ -7,7 +7,12 @@
 
 use crate::{force::ForceSystem, particle::ParticleState};
 
+mod runge_kutta;
+pub use runge_kutta::*;
+
 pub trait Integrator {
+    fn initialize(&mut self, particle_state: &ParticleState);
+
     fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64);
 }
 
@@ -15,6 +20,8 @@ pub trait Integrator {
 pub struct Leapfrog;
 
 impl Integrator for Leapfrog {
+    fn initialize(&mut self, _state: &ParticleState) {}
+
     /// Advances all bodies by one timestep using kick-drift-kick integration.
     ///
     /// The update sequence is:
@@ -43,32 +50,28 @@ impl Integrator for Leapfrog {
         let n = state.particle_count();
         let half_dt = 0.5 * dt;
 
-        {
-            let accelerations = forces.buffer().accelerations();
-            let (positions, velocities) = state.positions_and_velocities_mut();
+        let accelerations = forces.buffer().accelerations();
+        let (positions, velocities) = state.positions_and_velocities_mut();
 
-            for i in 0..n {
-                velocities.x[i] += accelerations.x[i] * half_dt;
-                velocities.y[i] += accelerations.y[i] * half_dt;
-                velocities.z[i] += accelerations.z[i] * half_dt;
+        for i in 0..n {
+            velocities.x[i] += accelerations.x[i] * half_dt;
+            velocities.y[i] += accelerations.y[i] * half_dt;
+            velocities.z[i] += accelerations.z[i] * half_dt;
 
-                positions.x[i] += velocities.x[i] * dt;
-                positions.y[i] += velocities.y[i] * dt;
-                positions.z[i] += velocities.z[i] * dt;
-            }
+            positions.x[i] += velocities.x[i] * dt;
+            positions.y[i] += velocities.y[i] * dt;
+            positions.z[i] += velocities.z[i] * dt;
         }
 
         forces.evaluate(state);
 
-        {
-            let accelerations = forces.buffer().accelerations();
-            let velocities = state.velocities_mut();
+        let accelerations = forces.buffer().accelerations();
+        let velocities = state.velocities_mut();
 
-            for i in 0..n {
-                velocities.x[i] += accelerations.x[i] * half_dt;
-                velocities.y[i] += accelerations.y[i] * half_dt;
-                velocities.z[i] += accelerations.z[i] * half_dt;
-            }
+        for i in 0..n {
+            velocities.x[i] += accelerations.x[i] * half_dt;
+            velocities.y[i] += accelerations.y[i] * half_dt;
+            velocities.z[i] += accelerations.z[i] * half_dt;
         }
     }
 }
@@ -76,6 +79,8 @@ impl Integrator for Leapfrog {
 pub struct NoIntegrator;
 
 impl Integrator for NoIntegrator {
+    fn initialize(&mut self, _state: &ParticleState) {}
+
     fn evaluate_timestep(
         &mut self,
         _state: &mut ParticleState,

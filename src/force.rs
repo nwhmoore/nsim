@@ -67,18 +67,18 @@ pub trait Force: ForceClone {
 }
 
 pub struct ForceEvaluation<'a> {
-    pub accelerations: &'a mut Vector3Series,
+    accelerations: &'a mut Vector3Series,
 }
 
 pub struct ForceBuffer {
-    pub accelerations: Vector3Series,
+    accelerations: Vector3Series,
 }
 
 impl ForceBuffer {
     /// Creates a zeroed acceleration buffer for `number_particles` particles.
     fn new(number_particles: usize) -> Self {
         ForceBuffer {
-            accelerations: Vector3Series::new_zeros(number_particles),
+            accelerations: Vector3Series::new_with_zeros(number_particles),
         }
     }
 
