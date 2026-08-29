@@ -3,7 +3,7 @@ use nsim::{
     integration::{Leapfrog, NoIntegrator},
     math_util::Vector3,
     particle::Particle,
-    simulation::SimulationBuilder,
+    simulation::Simulation,
 };
 use std::f64::consts::PI;
 
@@ -31,12 +31,11 @@ fn harmonic_potential_evaluates_expected_acceleration() {
 
     // test independent of integrator since no steps are run. only initial
     // evaluation is checked.
-    let simulation = SimulationBuilder::new()
+    let simulation = Simulation::new()
         .add_particle(particle)
         .add_force(force)
         .use_integrator(NoIntegrator)
-        .build()
-        .expect("sim built");
+        .build();
 
     assert_eq!(
         simulation.force_system().buffer().accelerations().x[0],
@@ -85,7 +84,7 @@ fn harmonic_potential_matches_quarter_period_solution() {
     let steps_per_period = 120_000.00;
     let dt = period / steps_per_period;
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .add_particle(Particle {
             name: String::from("test"),
             radius: 0.0,
@@ -99,8 +98,7 @@ fn harmonic_potential_matches_quarter_period_solution() {
         })
         .set_time_step(dt)
         .use_integrator(Leapfrog)
-        .build()
-        .expect("simulation build");
+        .build();
 
     simulation.run_steps((steps_per_period / 4.0) as usize);
 
@@ -182,7 +180,7 @@ fn harmonic_potential_conserves_energy_and_angular_momentum() {
     let period = 2.0 * PI;
     let dt = period * 0.001;
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .add_particle(Particle {
             name: String::from("test"),
             radius: 0.0,
@@ -193,8 +191,7 @@ fn harmonic_potential_conserves_energy_and_angular_momentum() {
         .add_force(HarmonicPotential { center, k })
         .use_integrator(Leapfrog)
         .set_time_step(dt)
-        .build()
-        .expect("sim built");
+        .build();
 
     simulation.run_until(period);
 

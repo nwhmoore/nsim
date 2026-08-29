@@ -14,6 +14,8 @@ pub trait Integrator {
     fn initialize(&mut self, particle_state: &ParticleState);
 
     fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64);
+
+    fn warn();
 }
 
 #[derive(Clone)]
@@ -74,6 +76,8 @@ impl Integrator for Leapfrog {
             velocities.z[i] += accelerations.z[i] * half_dt;
         }
     }
+
+    fn warn() {}
 }
 
 pub struct NoIntegrator;
@@ -87,5 +91,9 @@ impl Integrator for NoIntegrator {
         _forces: &mut ForceSystem,
         _dt: f64,
     ) {
+    }
+
+    fn warn() {
+        eprintln!("Warning: no integrator selected; simulation will not advance.");
     }
 }

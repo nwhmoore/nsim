@@ -1,8 +1,7 @@
 use crate::{
     diagnostics::Diagnostics,
-    error::SimError,
     force::{Force, ForceConfiguration, ForceSystem},
-    integration::Integrator,
+    integration::{Integrator, NoIntegrator},
     particle::{Particle, ParticleSystem},
     time::Time,
 };
@@ -11,30 +10,29 @@ use crate::{
 pub struct SimulationBuilder<I: Integrator> {
     particles: ParticleSystem,
     time: Time,
-    integrator: Option<I>,
+    integrator: I,
     force_config: ForceConfiguration,
     diagnostics: Diagnostics,
 }
 
-impl<I: Integrator> Default for SimulationBuilder<I> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl<I: Integrator> Default for SimulationBuilder<I> {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
 
 impl<I: Integrator> SimulationBuilder<I> {
     // TODO: Make infallible
-    pub fn build(self) -> Result<Simulation<I>, SimError> {
-        let Some(mut integrator) = self.integrator else {
-            return Err(SimError::MissingIntegrator);
-        };
+    pub fn build(mut self) -> Simulation<I> {
         let particle_count = self.particles.particle_count();
-        integrator.initialize(self.particles.state());
+
+        I::warn();
+        self.integrator.initialize(self.particles.state());
 
         let mut sim = Simulation {
             particles: self.particles,
             time: self.time,
-            integrator,
+            integrator: self.integrator,
             forces: ForceSystem::new(self.force_config, particle_count),
             diagnostics: self.diagnostics,
         };
@@ -49,18 +47,7 @@ impl<I: Integrator> SimulationBuilder<I> {
             sim.forces.configured_forces(),
         );
 
-        Ok(sim)
-    }
-
-    // TODO: move to Simulation; make it return type <I: NoIntegrator>
-    pub fn new() -> Self {
-        Self {
-            particles: ParticleSystem::default(),
-            time: Time::default(),
-            integrator: None,
-            force_config: ForceConfiguration::default(),
-            diagnostics: Diagnostics::default(),
-        }
+        sim
     }
 
     pub fn with_particle_system(mut self, particle_system: ParticleSystem) -> Self {
@@ -70,13 +57,6 @@ impl<I: Integrator> SimulationBuilder<I> {
 
     pub fn add_particle(mut self, particle: Particle) -> Self {
         self.particles.add_particle(particle);
-        self
-    }
-
-    // TODO: examine RK4 api
-    // TODO: make this transform type from <I: NoIntegrator> -> any <I>
-    pub fn use_integrator(mut self, integrator: I) -> Self {
-        self.integrator = Some(integrator);
         self
     }
 
@@ -96,12 +76,40 @@ impl<I: Integrator> SimulationBuilder<I> {
     }
 }
 
+impl SimulationBuilder<NoIntegrator> {
+    // TODO: examine RK4 api
+    // TODO: make this transform type from <I: NoIntegrator> -> any <I>
+    pub fn use_integrator<I: Integrator>(self, integrator: I) -> SimulationBuilder<I> {
+        SimulationBuilder {
+            particles: self.particles,
+            time: self.time,
+            integrator,
+            force_config: self.force_config,
+            diagnostics: self.diagnostics,
+        }
+    }
+}
+
 pub struct Simulation<I: Integrator> {
     particles: ParticleSystem,
     time: Time,
     integrator: I,
     forces: ForceSystem,
     diagnostics: Diagnostics,
+}
+
+impl Simulation<NoIntegrator> {
+    // TODO: move to Simulation; make it return type <I: NoIntegrator>
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new() -> SimulationBuilder<NoIntegrator> {
+        SimulationBuilder {
+            particles: ParticleSystem::default(),
+            time: Time::default(),
+            integrator: NoIntegrator,
+            force_config: ForceConfiguration::default(),
+            diagnostics: Diagnostics::default(),
+        }
+    }
 }
 
 impl<I: Integrator> Simulation<I> {
@@ -165,17 +173,16 @@ impl<I: Integrator> Simulation<I> {
 
 #[cfg(test)]
 mod test {
-    use crate::{integration::NoIntegrator, simulation::SimulationBuilder};
+    use crate::{integration::NoIntegrator, simulation::Simulation};
 
     #[test]
     fn run_until_runs_exact_number_of_complete_steps() {
         let dt = 0.1;
 
-        let mut simulation = SimulationBuilder::new()
+        let mut simulation = Simulation::new()
             .use_integrator(NoIntegrator)
             .set_time_step(dt)
-            .build()
-            .expect("simulation built");
+            .build();
 
         simulation.run_until(1.0);
 
@@ -190,11 +197,10 @@ mod test {
     fn run_until_does_not_exceed_end_time() {
         let dt = 0.1;
 
-        let mut simulation = SimulationBuilder::new()
+        let mut simulation = Simulation::new()
             .use_integrator(NoIntegrator)
             .set_time_step(dt)
-            .build()
-            .expect("simulation built");
+            .build();
 
         simulation.run_until(1.05);
 
@@ -206,11 +212,10 @@ mod test {
     fn run_until_does_not_advance_past_end_time() {
         let dt = 0.1;
 
-        let mut simulation = SimulationBuilder::new()
+        let mut simulation = Simulation::new()
             .use_integrator(NoIntegrator)
             .set_time_step(dt)
-            .build()
-            .expect("simulation built");
+            .build();
 
         simulation.run_until(0.05);
 

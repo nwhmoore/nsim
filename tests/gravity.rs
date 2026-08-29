@@ -3,7 +3,7 @@ use nsim::{
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
-    simulation::SimulationBuilder,
+    simulation::Simulation,
 };
 use std::f64::consts::PI;
 
@@ -63,14 +63,13 @@ fn two_body_conservation() {
 
     // ------------------------------------------------------------------------
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .with_particle_system(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
         .set_diagnostic_interval(one_period)
-        .build()
-        .expect("simulation built");
+        .build();
 
     let accels = &simulation.force_system().buffer().accelerations();
 
@@ -184,13 +183,12 @@ fn figure_eight_periodic_orbit() {
         });
     }
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .with_particle_system(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
-        .build()
-        .expect("sim built");
+        .build();
 
     simulation.run_steps(steps_per_third_period);
 

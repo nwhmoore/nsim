@@ -5,13 +5,13 @@ use nsim::{
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
-    simulation::SimulationBuilder,
+    simulation::Simulation,
 };
 
 fn simulate_drag(damping_rate: f64, initial_speed: f64, dt: f64) -> f64 {
     let tau = damping_rate.recip();
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .add_particle(Particle {
             name: String::from("test"),
             radius: 1.0,
@@ -25,8 +25,7 @@ fn simulate_drag(damping_rate: f64, initial_speed: f64, dt: f64) -> f64 {
         .use_integrator(Leapfrog)
         .add_force(ScalarDrag { damping_rate })
         .set_time_step(dt)
-        .build()
-        .expect("simulation built");
+        .build();
 
     simulation.run_until(tau);
 
@@ -160,15 +159,14 @@ fn gravity_and_drag_inspiral_binary() {
         mass: 1.0,
     });
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .with_particle_system(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .add_force(ScalarDrag { damping_rate })
         .set_time_step(dt)
         .set_diagnostic_interval(orbital_period)
-        .build()
-        .expect("sim built");
+        .build();
 
     simulation.run_steps((orbital_period / dt).round() as usize);
 

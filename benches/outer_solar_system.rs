@@ -3,7 +3,7 @@ use nsim::{
     integration::{Leapfrog, RungeKutta4},
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
-    simulation::{Simulation, SimulationBuilder},
+    simulation::Simulation,
 };
 use std::f64::consts::PI;
 
@@ -95,13 +95,12 @@ fn solar_system_leapfrog() -> Simulation<Leapfrog> {
     });
 
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
-    SimulationBuilder::new()
+    Simulation::new()
         .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
         .build()
-        .expect("simulation built")
 }
 
 fn solar_system_rk4() -> Simulation<RungeKutta4> {
@@ -192,13 +191,12 @@ fn solar_system_rk4() -> Simulation<RungeKutta4> {
     });
 
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
-    SimulationBuilder::new()
+    Simulation::new()
         .with_particle_system(particle_system)
         .use_integrator(RungeKutta4::default())
         .add_force(NewtonianGravity)
         .set_time_step(dt)
         .build()
-        .expect("simulation built")
 }
 
 /// Length of simulation (currently in years)

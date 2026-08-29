@@ -3,7 +3,7 @@ use nsim::{
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
-    simulation::SimulationBuilder,
+    simulation::Simulation,
 };
 use std::f64::consts::PI;
 
@@ -12,7 +12,7 @@ fn no_forces() {
     const TOLERANCE: f64 = 1e-12;
     const CONST_VEL: f64 = 1.0;
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .add_particle(Particle {
             name: String::from("test"),
             radius: 0.0,
@@ -26,8 +26,7 @@ fn no_forces() {
             mass: 0.0,
         })
         .use_integrator(Leapfrog)
-        .build()
-        .expect("sim built");
+        .build();
 
     simulation.run_steps(1_000);
 
@@ -58,7 +57,7 @@ fn constant_acceleration() {
     const ACCEL_VAL: f64 = -9.81;
     const STEPS: usize = 100;
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .add_particle(Particle {
             name: String::from("test"),
             radius: 0.0,
@@ -74,8 +73,7 @@ fn constant_acceleration() {
                 z: 0.0,
             },
         })
-        .build()
-        .expect("sim built");
+        .build();
 
     simulation.run_steps(STEPS);
 
@@ -204,18 +202,14 @@ fn leapfrog_convergence_and_time_reversibility() {
 
     let mut errors = Vec::with_capacity(steps_per_periods.len());
 
-    let sim_builder = SimulationBuilder::new()
+    let sim_builder = Simulation::new()
         .with_particle_system(initial_system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_diagnostic_interval(one_period);
 
     for (&step_per_period, &this_time_step) in steps_per_periods.iter().zip(all_time_steps.iter()) {
-        let mut this_simulation = sim_builder
-            .clone()
-            .set_time_step(this_time_step)
-            .build()
-            .expect("simulation built");
+        let mut this_simulation = sim_builder.clone().set_time_step(this_time_step).build();
 
         this_simulation.run_steps(step_per_period);
 

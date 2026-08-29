@@ -47,6 +47,8 @@ impl Integrator for RungeKutta4 {
         // y_{n+1} = y_n + dt/6 * (k1 + 2k2 + 2k3 + k4)
         RungeKutta4::apply_final_update(state, &self.k1, &self.k2, &self.k3, &self.k4, dt);
     }
+
+    fn warn() {}
 }
 
 impl RungeKutta4 {

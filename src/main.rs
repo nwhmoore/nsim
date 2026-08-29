@@ -8,15 +8,14 @@
 use std::f64::consts::PI;
 
 use nsim::{
-    error::SimError,
     force::{GRAVITY, NewtonianGravity},
     integration::Leapfrog,
     math_util::Vector3,
     particle::{Particle, ParticleSystem},
-    simulation::SimulationBuilder,
+    simulation::Simulation,
 };
 
-fn main() -> Result<(), SimError> {
+fn main() {
     // ---------------------------  INITIAL PARAMETERS ------------------------
     let mut particle_system = ParticleSystem::new_system();
 
@@ -57,15 +56,13 @@ fn main() -> Result<(), SimError> {
     // one period
     let end_time = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
 
-    let mut simulation = SimulationBuilder::new()
+    let mut simulation = Simulation::new()
         .with_particle_system(particle_system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(end_time * 0.01)
         .set_diagnostic_interval(end_time)
-        .build()?;
+        .build();
 
     simulation.run_until(end_time);
-
-    Ok(())
 }
