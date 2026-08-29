@@ -7,7 +7,7 @@ use nsim::{
 };
 use std::f64::consts::PI;
 
-fn solar_system_leapfrog() -> Simulation<Leapfrog> {
+fn outer_solar_system_particles() -> ParticleSystem {
     //nsim gravity
     debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
     let mut particle_system = ParticleSystem::new_system();
@@ -94,9 +94,13 @@ fn solar_system_leapfrog() -> Simulation<Leapfrog> {
         mass: 5.151389020535497e-5,
     });
 
+    particle_system
+}
+
+fn solar_system_leapfrog() -> Simulation<Leapfrog> {
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
     Simulation::new()
-        .with_particle_system(particle_system)
+        .with_particle_system(outer_solar_system_particles())
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
@@ -104,95 +108,9 @@ fn solar_system_leapfrog() -> Simulation<Leapfrog> {
 }
 
 fn solar_system_rk4() -> Simulation<RungeKutta4> {
-    //nsim gravity
-    debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
-    let mut particle_system = ParticleSystem::new_system();
-    // given velocites are in AU/day so we convert
-    let velocity_scale = 365.2425 / (2.0 * PI);
-
-    particle_system.add_particle(Particle {
-        name: String::from("Sol"),
-        radius: 0.0,
-        position: Vector3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        velocity: Vector3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        mass: 1.0,
-    });
-
-    particle_system.add_particle(Particle {
-        name: String::from("Jupiter"),
-        radius: 0.0,
-        position: Vector3 {
-            x: -5.394668400177522,
-            y: -7.99940060826745e-1,
-            z: 1.24034269478065e-1,
-        },
-        velocity: Vector3 {
-            x: 1.017430886009646e-3 * velocity_scale,
-            y: -7.114767972297869e-3 * velocity_scale,
-            z: 6.788739409026838e-6 * velocity_scale,
-        },
-        mass: 9.547919384243222e-4,
-    });
-
-    particle_system.add_particle(Particle {
-        name: String::from("Saturn"),
-        radius: 0.0,
-        position: Vector3 {
-            x: -2.023594923525499,
-            y: -9.836589990338709,
-            z: 2.515230776758679e-1,
-        },
-        velocity: Vector3 {
-            x: 5.160849399720572e-3 * velocity_scale,
-            y: -1.147589054910672e-3 * velocity_scale,
-            z: -1.852057559666422e-4 * velocity_scale,
-        },
-        mass: 2.858859806661029e-4,
-    });
-
-    particle_system.add_particle(Particle {
-        name: String::from("Uranus"),
-        radius: 0.0,
-        position: Vector3 {
-            x: 1.838604285828665e+1,
-            y: 7.723267785152875,
-            z: -2.09383548816917e-1,
-        },
-        velocity: Vector3 {
-            x: -1.54992807736344e-3 * velocity_scale,
-            y: 3.435924384648363e-3 * velocity_scale,
-            z: 3.287752876026161e-5 * velocity_scale,
-        },
-        mass: 4.3662440433515637e-5,
-    });
-
-    particle_system.add_particle(Particle {
-        name: String::from("Neptune"),
-        radius: 0.0,
-        position: Vector3 {
-            x: 2.830602595046843e+1,
-            y: -9.782837959471639,
-            z: -4.508807468243554e-1,
-        },
-        velocity: Vector3 {
-            x: 1.00677931471006e-3 * velocity_scale,
-            y: 2.979403494209059e-3 * velocity_scale,
-            z: -8.458453553880726e-5 * velocity_scale,
-        },
-        mass: 5.151389020535497e-5,
-    });
-
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
     Simulation::new()
-        .with_particle_system(particle_system)
+        .with_particle_system(outer_solar_system_particles())
         .use_integrator(RungeKutta4::default())
         .add_force(NewtonianGravity)
         .set_time_step(dt)
