@@ -10,14 +10,19 @@ use crate::{force::ForceSystem, particle::ParticleState};
 mod runge_kutta;
 pub use runge_kutta::*;
 
+/// which integrator that advances the simulation
 pub trait Integrator {
+    /// performs any required initialization when simulation building
     fn initialize(&mut self, particle_state: &ParticleState);
 
+    /// advances the simulation one timestep
     fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64);
 
+    /// provides a warning when simulation building
     fn warn();
 }
 
+/// symplectic 2nd-order integrator. 1 force evaluation per timestep
 #[derive(Clone)]
 pub struct Leapfrog;
 
@@ -80,6 +85,7 @@ impl Integrator for Leapfrog {
     fn warn() {}
 }
 
+/// empy integrator used as a default or used for testing.
 pub struct NoIntegrator;
 
 impl Integrator for NoIntegrator {

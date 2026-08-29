@@ -1,7 +1,13 @@
 use crate::force::Force;
 
+/// a scalar drag force defined by the damping rate
+/// 
+/// TODO: add formula
 #[derive(Clone)]
 pub struct ScalarDrag {
+    /// damping rate
+    /// 
+    /// TODO: add the math here
     pub damping_rate: f64,
 }
 

@@ -23,7 +23,7 @@ pub struct Diagnostics {
 }
 
 impl Diagnostics {
-    pub fn evaluate_now(
+    fn evaluate_now(
         current_time: f64,
         particle_state: &ParticleState,
         forces: &[Box<dyn Force>],
@@ -102,19 +102,20 @@ impl Diagnostics {
         self.records.push(diagnostic_record);
     }
 
+    /// returns the records
+    #[must_use]
     pub fn records(&self) -> &[DiagnosticRecord] {
         &self.records
     }
 
+    /// returns a specific record
+    #[must_use]
     pub fn get_sample(&self, idx: usize) -> &DiagnosticRecord {
         &self.records[idx]
     }
-
-    pub fn number_samples(&self) -> usize {
-        self.records.len()
-    }
 }
 
+/// A diagnostic record of a simulation's state.
 #[derive(Clone)]
 pub struct DiagnosticRecord {
     current_time: f64,
@@ -138,38 +139,55 @@ pub struct DiagnosticRecord {
 }
 
 impl DiagnosticRecord {
+    /// returns current time
+    #[must_use]
     pub fn current_time(&self) -> f64 {
         self.current_time
     }
-
+    /// returns total mass
+    #[must_use]
     pub fn total_mass(&self) -> f64 {
         self.total_mass
     }
 
+    /// returns kinetic energy
+    #[must_use]
     pub fn kinetic_energy(&self) -> f64 {
         self.kinetic_energy
     }
 
+    /// returns potential energy
+    #[must_use]
     pub fn potential_energy(&self) -> f64 {
         self.potential_energy
     }
 
+    /// returns total energy
+    #[must_use]
     pub fn total_energy(&self) -> f64 {
         self.total_energy
     }
 
+    /// returns linear momentum
+    #[must_use]
     pub fn linear_momentum(&self) -> Vector3 {
         self.linear_momentum
     }
 
+    /// returns angular momentum
+    #[must_use]
     pub fn angular_momentum(&self) -> Vector3 {
         self.angular_momentum
     }
 
+    /// returns center of mass position
+    #[must_use]
     pub fn center_of_mass_position(&self) -> Vector3 {
         self.center_of_mass_position
     }
 
+    /// returns center of mass velocity
+    #[must_use]
     pub fn center_of_mass_velocity(&self) -> Vector3 {
         self.center_of_mass_velocity
     }

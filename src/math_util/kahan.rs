@@ -1,6 +1,7 @@
-use std::f64;
+//! contains the Kahan accumulator to account for floating point error
 
 use crate::math_util::Vector3;
+use std::f64;
 
 /// Accumulates a sum while tracking the rounding error introduced by `f64`
 /// addition.
@@ -37,6 +38,7 @@ impl KahanAccumulator {
     }
 }
 
+/// Three parallel accumulators representing Cartesian components of a vector.
 #[derive(Default)]
 pub struct Kahan3 {
     x: KahanAccumulator,
@@ -63,8 +65,10 @@ impl Kahan3 {
     }
 }
 
-/// Per-particle Kahan-compensated acceleration totals used during one force
-/// evaluation.
+/// Three parallel accumulator series representing Cartesian components of a
+/// vector.
+///
+/// The vectors are indexed in lockstep.
 pub struct Kahan3Series {
     /// Accumulated X-component accelerations for each particle.
     pub x: Vec<KahanAccumulator>,
@@ -76,6 +80,7 @@ pub struct Kahan3Series {
 
 impl Kahan3Series {
     /// Creates an accumulator with one compensated total per `capacity`.
+    #[must_use]
     pub fn with_len(capacity: usize) -> Self {
         Self {
             x: (0..capacity).map(|_| KahanAccumulator::default()).collect(),
@@ -84,12 +89,8 @@ impl Kahan3Series {
         }
     }
 
-    pub fn reset_at(&mut self, idx: usize) {
-        self.x[idx].reset();
-        self.y[idx].reset();
-        self.z[idx].reset();
-    }
-
+    /// length of series
+    #[must_use]
     pub fn len(&self) -> usize {
         debug_assert_eq!(self.x.len(), self.y.len());
         debug_assert_eq!(self.x.len(), self.z.len());
@@ -97,7 +98,9 @@ impl Kahan3Series {
         self.x.len()
     }
 
+    /// checks if empty
     #[allow(unused)]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.x.is_empty()
     }

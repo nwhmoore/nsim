@@ -1,15 +1,21 @@
+//! Handles the internal clock, time step, and scheduling of the simulation
+
+/// Contains the internal clock, time step, and scheduling of the simulation
 #[derive(Clone)]
 pub struct Time {
-    pub(crate) current_time: f64,
-    pub(crate) time_step: f64,
+    /// internal clock, current time
+    pub(crate) current: f64,
+    /// time step
+    pub(crate) step: f64,
+    /// diagnostic schedule
     pub(crate) diagnostic_schedule: DiagnosticSchedule,
 }
 
 impl Default for Time {
     fn default() -> Self {
         Self {
-            current_time: 0.0,
-            time_step: 0.001,
+            current: 0.0,
+            step: 0.001,
             diagnostic_schedule: DiagnosticSchedule::default(),
         }
     }

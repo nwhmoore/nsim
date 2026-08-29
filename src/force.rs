@@ -10,12 +10,16 @@ pub use drag::*;
 pub use gravity::*;
 pub use simple::*;
 
+/// forces being added to the simulation
 #[derive(Default, Clone)]
 pub struct ForceConfiguration {
     forces: Vec<Box<dyn Force>>,
 }
 
 impl ForceConfiguration {
+    /// add a force to the simulation
+    /// 
+    /// note: do not add a single force more than once
     pub fn add_force<F>(&mut self, force: F)
     where
         F: Force + 'static,
@@ -24,12 +28,16 @@ impl ForceConfiguration {
     }
 }
 
+/// force system which holds the config and the internal acceleration buffer for
+/// all particles
 pub struct ForceSystem {
     configuration: ForceConfiguration,
     buffer: ForceBuffer,
 }
 
 impl ForceSystem {
+    /// creates a new force system
+    #[must_use]
     pub fn new(configuration: ForceConfiguration, particle_count: usize) -> Self {
         Self {
             configuration,
@@ -37,6 +45,7 @@ impl ForceSystem {
         }
     }
 
+    /// evaluates all forces on all particles in a given state
     pub fn evaluate(&mut self, particle_state: &ParticleState) {
         self.buffer.clear();
 
@@ -49,27 +58,36 @@ impl ForceSystem {
         }
     }
 
+    /// returns the force buffer
+    #[must_use]
     pub fn buffer(&self) -> &ForceBuffer {
         &self.buffer
     }
 
+    /// returns the configured forces
+    #[must_use]
     pub fn configured_forces(&self) -> &[Box<dyn Force>] {
         &self.configuration.forces
     }
 }
 
+/// defines a force
 pub trait Force: ForceClone {
+    /// evaluates this force on all particles
     fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>);
 
+    /// calculates the potential energy associated with this force
     fn calculate_potential_energy(&self, _particle_state: &ParticleState) -> Option<f64> {
         None
     }
 }
 
+/// scratch work space for the force evaluation
 pub struct ForceEvaluation<'a> {
     accelerations: &'a mut Vector3Series,
 }
 
+/// buffered accelerations of the particles
 pub struct ForceBuffer {
     accelerations: Vector3Series,
 }
@@ -89,12 +107,15 @@ impl ForceBuffer {
     }
 
     /// Returns the per-particle acceleration vectors stored by the buffer.
+    #[must_use]
     pub fn accelerations(&self) -> &Vector3Series {
         &self.accelerations
     }
 }
 
+/// lets us clone the force system
 pub trait ForceClone {
+    /// clones
     fn clone_box(&self) -> Box<dyn Force>;
 }
 

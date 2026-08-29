@@ -59,10 +59,12 @@ impl std::ops::Div<f64> for Vector3 {
 
 impl Vector3 {
     /// Returns the squared Euclidean norm of the vector.
+    #[must_use]
     pub fn square(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
-
+    /// returns the magnitude of a vector
+    #[must_use]
     pub fn norm(&self) -> f64 {
         self.square().sqrt()
     }
@@ -84,6 +86,7 @@ pub struct Vector3Series {
 
 impl Vector3Series {
     /// Creates a zero-filled series with one vector entry per index.
+    #[must_use]
     pub fn new_with_zeros(length: usize) -> Self {
         Vector3Series {
             x: vec![0.0; length],
@@ -92,6 +95,8 @@ impl Vector3Series {
         }
     }
 
+    /// creates empty series with capacity
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Vector3Series {
             x: Vec::with_capacity(capacity),
@@ -103,6 +108,7 @@ impl Vector3Series {
     ///
     /// This creates an entirely new structure, DO NOT USE IN FORCE EVALUATION
     /// OR INTEGRATION. For diagnostic and testing API only.
+    #[must_use]
     pub fn vector_at(&self, idx: usize) -> Vector3 {
         Vector3 {
             x: self.x[idx],
@@ -112,6 +118,7 @@ impl Vector3Series {
     }
 
     /// Returns the number of stored vectors in the series.
+    #[must_use]
     pub fn len(&self) -> usize {
         debug_assert_eq!(self.x.len(), self.y.len());
         debug_assert_eq!(self.x.len(), self.z.len());
@@ -119,7 +126,8 @@ impl Vector3Series {
         self.x.len()
     }
 
-    #[allow(unused)]
+    /// checks if empty
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.x.is_empty()
     }
@@ -156,7 +164,7 @@ mod test {
                 y: 9.0,
                 z: 6.0,
             }
-        )
+        );
     }
 
     #[test]
@@ -168,16 +176,16 @@ mod test {
                 y: -1.0,
                 z: -6.0,
             }
-        )
+        );
     }
 
     #[test]
     fn test_square() {
-        assert_eq!(LHS.square(), 25.0)
+        assert_eq!(LHS.square(), 25.0);
     }
 
     #[test]
     fn test_norm() {
-        assert_eq!(LHS.norm(), 5.0)
+        assert_eq!(LHS.norm(), 5.0);
     }
 }

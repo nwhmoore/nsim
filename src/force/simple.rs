@@ -4,8 +4,11 @@ use crate::{
     particle::ParticleState,
 };
 
+/// A force which provides a constant acceleration independent of mass. Used
+/// mostly for testing.
 #[derive(Clone)]
 pub struct ConstantAccel {
+    /// the constant acceleration applied
     pub accel_vec: Vector3,
 }
 
@@ -21,10 +24,12 @@ impl Force for ConstantAccel {
     }
 }
 
-/// Applies harmonic oscillator potential a_i = -(k / m_i) (x_i - center)
+/// Applies harmonic oscillator potential ``a_i`` = -(k / ``m_i``) (``x_i`` - center)
 #[derive(Clone)]
 pub struct HarmonicPotential {
+    /// spring constant
     pub k: f64,
+    /// center of potential
     pub center: Vector3,
 }
 
@@ -60,7 +65,7 @@ impl Force for HarmonicPotential {
 
             let r2 = dx * dx + dy * dy + dz * dz;
 
-            potential_energy.add(0.5 * self.k * r2)
+            potential_energy.add(0.5 * self.k * r2);
         }
 
         Some(potential_energy.total())

@@ -20,16 +20,19 @@ pub struct ParticleSystem {
 
 impl ParticleSystem {
     /// Creates an empty particle system.
+    #[must_use]
     pub fn new_system() -> Self {
         ParticleSystem::default()
     }
 
     /// Returns the stable catalog metadata for the particles in this system.
+    #[must_use]
     pub fn catalog(&self) -> &ParticleCatalog {
         &self.catalog
     }
 
     /// Returns a view of the simulation state for this particle system.
+    #[must_use]
     pub fn state(&self) -> &ParticleState {
         &self.state
     }
@@ -40,6 +43,7 @@ impl ParticleSystem {
     }
 
     /// Returns the number of particles currently stored in the system.
+    #[must_use]
     pub fn particle_count(&self) -> usize {
         self.catalog.id.len()
     }
@@ -85,22 +89,6 @@ pub struct ParticleCatalog {
     radius: Vec<f64>,
 }
 
-impl ParticleCatalog {
-    /// Returns the stored name for a particle index, or an I/O error if the
-    /// index is out of bounds.
-    pub fn get_particle_name(&self, particle_index: usize) -> std::io::Result<&str> {
-        self.name
-            .get(particle_index)
-            .map(String::as_str)
-            .ok_or_else(|| {
-                std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    format!("particle index {particle_index} is out of bounds"),
-                )
-            })
-    }
-}
-
 /// Time-varying numerical state stored for all particles.
 ///
 /// A mass of `None` marks a massless test particle.
@@ -121,17 +109,20 @@ pub struct ParticleState {
 
 impl ParticleState {
     /// Returns the number of particles currently represented in the state.
+    #[must_use]
     pub fn particle_count(&self) -> usize {
         self.alive_statuses.len()
     }
 
     /// Returns the per-particle mass values, including `None` for massless test
     /// particles.
+    #[must_use]
     pub fn masses(&self) -> &[f64] {
         &self.masses
     }
 
     /// Returns the position series for all particles.
+    #[must_use]
     pub fn positions(&self) -> &Vector3Series {
         &self.positions
     }
@@ -142,6 +133,7 @@ impl ParticleState {
     }
 
     /// Returns the velocity series for all particles.
+    #[must_use]
     pub fn velocities(&self) -> &Vector3Series {
         &self.velocities
     }
@@ -151,11 +143,14 @@ impl ParticleState {
         &mut self.velocities
     }
 
+    /// returns a tuple containing mutable (positions, velocities) of all
+    /// particles
     pub fn positions_and_velocities_mut(&mut self) -> (&mut Vector3Series, &mut Vector3Series) {
         (&mut self.positions, &mut self.velocities)
     }
 
     /// Returns the per-particle active/inactive flags.
+    #[must_use]
     pub fn alive_statuses(&self) -> &[bool] {
         &self.alive_statuses
     }

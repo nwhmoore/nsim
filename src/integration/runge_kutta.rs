@@ -2,6 +2,7 @@ use crate::{
     force::ForceSystem, integration::Integrator, math_util::Vector3Series, particle::ParticleState,
 };
 
+/// 4th order integrator, four force evalutaions per time step
 #[derive(Clone, Default)]
 pub struct RungeKutta4 {
     k1: RK4Stage,
@@ -87,21 +88,21 @@ impl RungeKutta4 {
         let (positions, velocities) = state.positions_and_velocities_mut();
 
         for i in 0..n {
-            let dr_x = (k1.dr.x[i] + k2.dr.x[i] * 2.0 + k3.dr.x[i] * 2.0 + k4.dr.x[i]) * scale;
-            let dr_y = (k1.dr.y[i] + k2.dr.y[i] * 2.0 + k3.dr.y[i] * 2.0 + k4.dr.y[i]) * scale;
-            let dr_z = (k1.dr.z[i] + k2.dr.z[i] * 2.0 + k3.dr.z[i] * 2.0 + k4.dr.z[i]) * scale;
+            let dpos_x = (k1.dr.x[i] + k2.dr.x[i] * 2.0 + k3.dr.x[i] * 2.0 + k4.dr.x[i]) * scale;
+            let dpos_y = (k1.dr.y[i] + k2.dr.y[i] * 2.0 + k3.dr.y[i] * 2.0 + k4.dr.y[i]) * scale;
+            let dpos_z = (k1.dr.z[i] + k2.dr.z[i] * 2.0 + k3.dr.z[i] * 2.0 + k4.dr.z[i]) * scale;
 
-            let dv_x = (k1.dv.x[i] + k2.dv.x[i] * 2.0 + k3.dv.x[i] * 2.0 + k4.dv.x[i]) * scale;
-            let dv_y = (k1.dv.y[i] + k2.dv.y[i] * 2.0 + k3.dv.y[i] * 2.0 + k4.dv.y[i]) * scale;
-            let dv_z = (k1.dv.z[i] + k2.dv.z[i] * 2.0 + k3.dv.z[i] * 2.0 + k4.dv.z[i]) * scale;
+            let dvel_x = (k1.dv.x[i] + k2.dv.x[i] * 2.0 + k3.dv.x[i] * 2.0 + k4.dv.x[i]) * scale;
+            let dvel_y = (k1.dv.y[i] + k2.dv.y[i] * 2.0 + k3.dv.y[i] * 2.0 + k4.dv.y[i]) * scale;
+            let dvel_z = (k1.dv.z[i] + k2.dv.z[i] * 2.0 + k3.dv.z[i] * 2.0 + k4.dv.z[i]) * scale;
 
-            positions.x[i] += dr_x;
-            positions.y[i] += dr_y;
-            positions.z[i] += dr_z;
+            positions.x[i] += dpos_x;
+            positions.y[i] += dpos_y;
+            positions.z[i] += dpos_z;
 
-            velocities.x[i] += dv_x;
-            velocities.y[i] += dv_y;
-            velocities.z[i] += dv_z;
+            velocities.x[i] += dvel_x;
+            velocities.y[i] += dvel_y;
+            velocities.z[i] += dvel_z;
         }
     }
 }

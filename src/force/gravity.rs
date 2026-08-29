@@ -6,8 +6,11 @@ use crate::{
     particle::ParticleState,
 };
 
+/// Newtonian gravitational constant. This currently sets the units of the
+/// entire simulation.
 pub const GRAVITY: f64 = 1.0;
 
+/// Direct Newtonian gravitational force.
 #[derive(Clone)]
 pub struct NewtonianGravity;
 
@@ -61,7 +64,7 @@ impl Force for NewtonianGravity {
                 debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
                 let inv_r = r2.sqrt().recip();
 
-                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r)
+                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r);
             }
         }
 
@@ -69,6 +72,7 @@ impl Force for NewtonianGravity {
     }
 }
 
+/// Compensated accumulated Newtonian gravity.
 #[derive(Clone)]
 pub struct CompensatedNewtonianGravity;
 
@@ -127,7 +131,7 @@ impl Force for CompensatedNewtonianGravity {
                 debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
                 let inv_r = r2.sqrt().recip();
 
-                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r)
+                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r);
             }
         }
 
