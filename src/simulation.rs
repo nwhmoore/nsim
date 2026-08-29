@@ -15,12 +15,6 @@ pub struct SimulationBuilder<I: Integrator> {
     diagnostics: Diagnostics,
 }
 
-// impl<I: Integrator> Default for SimulationBuilder<I> {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
-
 impl<I: Integrator> SimulationBuilder<I> {
     // TODO: Make infallible
     pub fn build(mut self) -> Simulation<I> {
@@ -78,7 +72,6 @@ impl<I: Integrator> SimulationBuilder<I> {
 
 impl SimulationBuilder<NoIntegrator> {
     // TODO: examine RK4 api
-    // TODO: make this transform type from <I: NoIntegrator> -> any <I>
     pub fn use_integrator<I: Integrator>(self, integrator: I) -> SimulationBuilder<I> {
         SimulationBuilder {
             particles: self.particles,
@@ -99,7 +92,6 @@ pub struct Simulation<I: Integrator> {
 }
 
 impl Simulation<NoIntegrator> {
-    // TODO: move to Simulation; make it return type <I: NoIntegrator>
     #[allow(clippy::new_ret_no_self)]
     pub fn new() -> SimulationBuilder<NoIntegrator> {
         SimulationBuilder {

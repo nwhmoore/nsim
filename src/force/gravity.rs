@@ -5,10 +5,6 @@ use crate::{
     math_util::kahan::{Kahan3Series, KahanAccumulator},
     particle::ParticleState,
 };
-// use std::f64::consts::PI;
-
-// /// The units of this constant currently set the units of the entire simulation.
-// pub const GRAVITY: f64 = 4.0 * PI * PI;
 
 pub const GRAVITY: f64 = 1.0;
 

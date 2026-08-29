@@ -94,6 +94,6 @@ impl Integrator for NoIntegrator {
     }
 
     fn warn() {
-        eprintln!("Warning: no integrator selected; simulation will not advance.");
+        eprintln!("[WARNING] :: no integrator selected; simulation will not advance.");
     }
 }
