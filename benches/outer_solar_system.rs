@@ -7,7 +7,7 @@ use nsim::{
 };
 use std::f64::consts::PI;
 
-fn solar_system_leapfrog() -> Simulation {
+fn solar_system_leapfrog() -> Simulation<Leapfrog> {
     //nsim gravity
     debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
     let mut particle_system = ParticleSystem::new_system();

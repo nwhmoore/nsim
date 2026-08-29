@@ -2,13 +2,13 @@ use crate::{
     diagnostics::Diagnostics,
     error::SimError,
     force::{Force, ForceConfiguration, ForceSystem},
-    integration::{Integrator, Leapfrog},
+    integration::Integrator,
     particle::{Particle, ParticleSystem},
     time::Time,
 };
 
 #[derive(Clone)]
-pub struct SimulationBuilder<I: Integrator = Leapfrog> {
+pub struct SimulationBuilder<I: Integrator> {
     particles: ParticleSystem,
     time: Time,
     integrator: Option<I>,
@@ -16,13 +16,14 @@ pub struct SimulationBuilder<I: Integrator = Leapfrog> {
     diagnostics: Diagnostics,
 }
 
-impl Default for SimulationBuilder {
+impl<I: Integrator> Default for SimulationBuilder<I> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<I: Integrator> SimulationBuilder<I> {
+    // TODO: Make infallible
     pub fn build(self) -> Result<Simulation<I>, SimError> {
         let Some(mut integrator) = self.integrator else {
             return Err(SimError::MissingIntegrator);
@@ -51,6 +52,7 @@ impl<I: Integrator> SimulationBuilder<I> {
         Ok(sim)
     }
 
+    // TODO: move to Simulation; make it return type <I: NoIntegrator>
     pub fn new() -> Self {
         Self {
             particles: ParticleSystem::default(),
@@ -72,6 +74,7 @@ impl<I: Integrator> SimulationBuilder<I> {
     }
 
     // TODO: examine RK4 api
+    // TODO: make this transform type from <I: NoIntegrator> -> any <I>
     pub fn use_integrator(mut self, integrator: I) -> Self {
         self.integrator = Some(integrator);
         self
@@ -93,7 +96,7 @@ impl<I: Integrator> SimulationBuilder<I> {
     }
 }
 
-pub struct Simulation<I: Integrator = Leapfrog> {
+pub struct Simulation<I: Integrator> {
     particles: ParticleSystem,
     time: Time,
     integrator: I,
