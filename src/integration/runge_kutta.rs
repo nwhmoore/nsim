@@ -28,8 +28,7 @@ impl Integrator for RungeKutta4 {
         //k3
         self.apply_intermediate_stage(state, forces, dt, dt / 3.0);
         //k4 + total accumulation
-        self.apply_final_stage(state, forces,  dt / 6.0);
-
+        self.apply_final_stage(state, forces, dt / 6.0);
     }
 
     fn warn() {}
@@ -119,25 +118,28 @@ impl RungeKutta4 {
     }
 
     fn apply_final_stage(
-    &mut self,
-    state: &mut ParticleState,
-    forces: &mut ForceSystem,
-    total_scale: f64,
-) {
-    forces.evaluate(&self.intermediate);
-    let dvel = forces.buffer().accelerations();
-    let n = self.intermediate.particle_count();
-    let intermediate_velocities = self.intermediate.velocities();
-    let (state_positions, state_velocities) = state.positions_and_velocities_mut();
+        &mut self,
+        state: &mut ParticleState,
+        forces: &mut ForceSystem,
+        total_scale: f64,
+    ) {
+        forces.evaluate(&self.intermediate);
+        let dvel = forces.buffer().accelerations();
+        let n = self.intermediate.particle_count();
+        let intermediate_velocities = self.intermediate.velocities();
+        let (state_positions, state_velocities) = state.positions_and_velocities_mut();
 
-    for i in 0..n {
-        state_positions.x[i] += self.total_dpos.x[i] + intermediate_velocities.x[i] * total_scale;
-        state_positions.y[i] += self.total_dpos.y[i] + intermediate_velocities.y[i] * total_scale;
-        state_positions.z[i] += self.total_dpos.z[i] + intermediate_velocities.z[i] * total_scale;
+        for i in 0..n {
+            state_positions.x[i] +=
+                self.total_dpos.x[i] + intermediate_velocities.x[i] * total_scale;
+            state_positions.y[i] +=
+                self.total_dpos.y[i] + intermediate_velocities.y[i] * total_scale;
+            state_positions.z[i] +=
+                self.total_dpos.z[i] + intermediate_velocities.z[i] * total_scale;
 
-        state_velocities.x[i] += self.total_dvel.x[i] + dvel.x[i] * total_scale;
-        state_velocities.y[i] += self.total_dvel.y[i] + dvel.y[i] * total_scale;
-        state_velocities.z[i] += self.total_dvel.z[i] + dvel.z[i] * total_scale;
+            state_velocities.x[i] += self.total_dvel.x[i] + dvel.x[i] * total_scale;
+            state_velocities.y[i] += self.total_dvel.y[i] + dvel.y[i] * total_scale;
+            state_velocities.z[i] += self.total_dvel.z[i] + dvel.z[i] * total_scale;
+        }
     }
-}
 }

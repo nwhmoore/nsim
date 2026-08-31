@@ -1,6 +1,6 @@
 use crate::{
     force::{Force, ForceEvaluation},
-    math_util::{Vector3, kahan::KahanAccumulator},
+    math_util::{KahanAccumulator, Vector3},
     particle::ParticleState,
 };
 

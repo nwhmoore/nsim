@@ -2,7 +2,7 @@
 
 use crate::{
     force::{Force, ForceEvaluation},
-    math_util::kahan::{Kahan3Series, KahanAccumulator},
+    math_util::{Kahan3Series, KahanAccumulator},
     particle::ParticleState,
 };
 

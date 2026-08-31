@@ -6,10 +6,7 @@
 
 use crate::{
     force::Force,
-    math_util::{
-        Vector3,
-        kahan::{Kahan3, KahanAccumulator},
-    },
+    math_util::{Kahan3, KahanAccumulator, Vector3},
     particle::ParticleState,
 };
 
