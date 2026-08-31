@@ -21,32 +21,15 @@ impl Integrator for RungeKutta4 {
     }
 
     fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64) {
-        self.intermediate.clone_pos_and_vel_from(state);
-
         // k1
         self.apply_first_stage(state, forces, dt / 2.0, dt / 6.0);
         //k2
-        self.apply_stage(state, forces, dt / 2.0, dt / 3.0);
+        self.apply_intermediate_stage(state, forces, dt / 2.0, dt / 3.0);
         //k3
-        self.apply_stage(state, forces, dt, dt / 3.0);
-        //k4
-        self.apply_stage(state, forces, 0.0, dt / 6.0);
+        self.apply_intermediate_stage(state, forces, dt, dt / 3.0);
+        //k4 + total accumulation
+        self.apply_final_stage(state, forces,  dt / 6.0);
 
-        let n = state.particle_count();
-        let (positions, velocities) = state.positions_and_velocities_mut();
-
-        for i in 0..n {
-            positions.x[i] += self.total_dpos.x[i];
-            positions.y[i] += self.total_dpos.y[i];
-            positions.z[i] += self.total_dpos.z[i];
-
-            velocities.x[i] += self.total_dvel.x[i];
-            velocities.y[i] += self.total_dvel.y[i];
-            velocities.z[i] += self.total_dvel.z[i];
-        }
-
-        // self.total_dpos.fill(0.0);
-        // self.total_dvel.fill(0.0);
     }
 
     fn warn() {}
@@ -60,7 +43,7 @@ impl RungeKutta4 {
         stage_scale: f64,
         total_scale: f64,
     ) {
-        forces.evaluate(&self.intermediate);
+        forces.evaluate(state);
         let dvel = forces.buffer().accelerations();
 
         let n = self.intermediate.particle_count();
@@ -70,9 +53,9 @@ impl RungeKutta4 {
             self.intermediate.positions_and_velocities_mut();
 
         for i in 0..n {
-            let vx = intermediate_velocities.x[i];
-            let vy = intermediate_velocities.y[i];
-            let vz = intermediate_velocities.z[i];
+            let vx = state_velocities.x[i];
+            let vy = state_velocities.y[i];
+            let vz = state_velocities.z[i];
 
             self.total_dpos.x[i] = vx * total_scale;
             self.total_dpos.y[i] = vy * total_scale;
@@ -94,7 +77,7 @@ impl RungeKutta4 {
         }
     }
 
-    fn apply_stage(
+    fn apply_intermediate_stage(
         &mut self,
         state: &ParticleState,
         forces: &mut ForceSystem,
@@ -134,11 +117,27 @@ impl RungeKutta4 {
             intermediate_velocities.z[i] = state_velocities.z[i] + dvel.z[i] * stage_scale;
         }
     }
-}
 
-impl ParticleState {
-    fn clone_pos_and_vel_from(&mut self, source: &ParticleState) {
-        self.positions_mut().clone_from(source.positions());
-        self.velocities_mut().clone_from(source.velocities());
+    fn apply_final_stage(
+    &mut self,
+    state: &mut ParticleState,
+    forces: &mut ForceSystem,
+    total_scale: f64,
+) {
+    forces.evaluate(&self.intermediate);
+    let dvel = forces.buffer().accelerations();
+    let n = self.intermediate.particle_count();
+    let intermediate_velocities = self.intermediate.velocities();
+    let (state_positions, state_velocities) = state.positions_and_velocities_mut();
+
+    for i in 0..n {
+        state_positions.x[i] += self.total_dpos.x[i] + intermediate_velocities.x[i] * total_scale;
+        state_positions.y[i] += self.total_dpos.y[i] + intermediate_velocities.y[i] * total_scale;
+        state_positions.z[i] += self.total_dpos.z[i] + intermediate_velocities.z[i] * total_scale;
+
+        state_velocities.x[i] += self.total_dvel.x[i] + dvel.x[i] * total_scale;
+        state_velocities.y[i] += self.total_dvel.y[i] + dvel.y[i] * total_scale;
+        state_velocities.z[i] += self.total_dvel.z[i] + dvel.z[i] * total_scale;
     }
+}
 }
