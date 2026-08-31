@@ -1,10 +1,11 @@
 use nsim::{
     force::{GRAVITY, NewtonianGravity},
     integration::{Leapfrog, RungeKutta4},
-    math_util::Vector3,
+    math_util::{OrbitalElements, Vector3},
     particle::{Particle, ParticleSystem},
     simulation::Simulation,
 };
+use rand::Rng;
 use std::f64::consts::PI;
 
 fn outer_solar_system_particles() -> ParticleSystem {
@@ -13,6 +14,7 @@ fn outer_solar_system_particles() -> ParticleSystem {
     let mut particle_system = ParticleSystem::new_system();
     // given velocites are in AU/day so we convert
     let velocity_scale = 365.2425 / (2.0 * PI);
+    let central_mass = 1.0;
 
     particle_system.add_particle(Particle {
         name: String::from("Sol"),
@@ -27,7 +29,7 @@ fn outer_solar_system_particles() -> ParticleSystem {
             y: 0.0,
             z: 0.0,
         },
-        mass: 1.0,
+        mass: central_mass,
     });
 
     particle_system.add_particle(Particle {
@@ -94,6 +96,31 @@ fn outer_solar_system_particles() -> ParticleSystem {
         mass: 5.151389020535497e-5,
     });
 
+    let num_tno = 100;
+    let tno_semi_range = 40.0..=100.0;
+    let mut rng = rand::rng();
+
+    for tno_idx in 0..num_tno {
+        let orbit = OrbitalElements {
+            semi: rng.random_range(tno_semi_range.clone()),
+            ecc: 0.0,
+            inc: 0.0,
+            arg_peri: 0.0,
+            long_asc: 0.0,
+            mean_anom: rng.random_range(0.0..360.0),
+        };
+
+        let (position, velocity) = orbit.to_cart(central_mass);
+
+        particle_system.add_particle(Particle {
+            name: format!("tno_{tno_idx}"),
+            radius: 0.0,
+            position,
+            velocity,
+            mass: 0.0,
+        });
+    }
+
     particle_system
 }
 
@@ -118,7 +145,7 @@ fn solar_system_rk4() -> Simulation<RungeKutta4> {
 }
 
 /// Length of simulation (currently in years)
-const SIMULATION_YEARS: f64 = 4e4;
+const SIMULATION_YEARS: f64 = 4e3;
 const SIMULATION_TIME: f64 = SIMULATION_YEARS * 2.0 * PI;
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};

@@ -5,17 +5,17 @@ use crate::{force::GRAVITY, math_util::Vector3};
 /// Keplerian orbital elements
 pub struct OrbitalElements {
     /// Semi-major axis
-    semi: f64,
+    pub semi: f64,
     /// Eccentricity
-    ecc: f64,
+    pub ecc: f64,
     /// Inclination (radians)
-    inc: f64,
+    pub inc: f64,
     /// Argument of pericenter (radians)
-    arg_peri: f64,
+    pub arg_peri: f64,
     /// Longitude of ascending node (radians)
-    long_asc: f64,
+    pub long_asc: f64,
     /// Mean anomaly (radians)
-    mean_anom: f64,
+    pub mean_anom: f64,
 }
 
 impl OrbitalElements {
