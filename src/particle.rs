@@ -143,6 +143,13 @@ impl ParticleState {
         &mut self.velocities
     }
 
+    /// returns a tuple containing (positions, velocities) of all
+    /// particles
+    #[must_use]
+    pub fn positions_and_velocities(&self) -> (&Vector3Series, &Vector3Series) {
+        (&self.positions, &self.velocities)
+    }
+
     /// returns a tuple containing mutable (positions, velocities) of all
     /// particles
     pub fn positions_and_velocities_mut(&mut self) -> (&mut Vector3Series, &mut Vector3Series) {

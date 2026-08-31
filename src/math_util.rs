@@ -85,6 +85,13 @@ pub struct Vector3Series {
 }
 
 impl Vector3Series {
+    /// fills each series by cloning [`value`]
+    pub fn fill(&mut self, value: f64) {
+        self.x.fill(value);
+        self.y.fill(value);
+        self.z.fill(value);
+    }
+
     /// Creates a zero-filled series with one vector entry per index.
     #[must_use]
     pub fn new_with_zeros(length: usize) -> Self {

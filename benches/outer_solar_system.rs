@@ -147,7 +147,5 @@ fn bench_solar_system_rk4(c: &mut Criterion) {
     });
 }
 
-// TODO: Benchmark RK4
-
 criterion_group!(benches, bench_solar_system_leapfrog, bench_solar_system_rk4);
 criterion_main!(benches);
