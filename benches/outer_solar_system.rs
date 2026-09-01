@@ -145,7 +145,7 @@ fn solar_system_rk4() -> Simulation<RungeKutta4> {
 }
 
 /// Length of simulation (currently in years)
-const SIMULATION_YEARS: f64 = 4e3;
+const SIMULATION_YEARS: f64 = 4e4;
 const SIMULATION_TIME: f64 = SIMULATION_YEARS * 2.0 * PI;
 
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
