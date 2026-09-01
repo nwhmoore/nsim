@@ -35,15 +35,18 @@ impl Diagnostics {
         let positions = particle_state.positions();
         let velocities = particle_state.velocities();
         let masses = particle_state.masses();
+        let massive_indices = particle_state.massive_indices();
 
-        for (i, &mass) in masses.iter().enumerate() {
-            let rx = positions.x[i];
-            let ry = positions.y[i];
-            let rz = positions.z[i];
+        for &idx in massive_indices {
+            let mass = masses[idx];
+            
+            let rx = positions.x[idx];
+            let ry = positions.y[idx];
+            let rz = positions.z[idx];
 
-            let vx = velocities.x[i];
-            let vy = velocities.y[i];
-            let vz = velocities.z[i];
+            let vx = velocities.x[idx];
+            let vy = velocities.y[idx];
+            let vz = velocities.z[idx];
 
             total_mass.add(mass);
 
