@@ -2,13 +2,15 @@
 
 use crate::{math_util::Vector3Series, particle::ParticleState};
 
+mod constant;
 mod drag;
 mod gravity;
-mod simple;
+mod harmonic;
 
+pub use constant::*;
 pub use drag::*;
 pub use gravity::*;
-pub use simple::*;
+pub use harmonic::*;
 
 /// forces being added to the simulation
 #[derive(Default, Clone)]
@@ -18,7 +20,7 @@ pub struct ForceConfiguration {
 
 impl ForceConfiguration {
     /// add a force to the simulation
-    /// 
+    ///
     /// note: do not add a single force more than once
     pub fn add_force<F>(&mut self, force: F)
     where
