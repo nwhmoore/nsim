@@ -21,7 +21,7 @@ pub struct ParticleSystem {
 impl ParticleSystem {
     /// Creates an empty particle system.
     #[must_use]
-    pub fn new_system() -> Self {
+    pub fn new() -> Self {
         ParticleSystem::default()
     }
 
@@ -54,7 +54,6 @@ impl ParticleSystem {
     /// their respective arrays.
     pub fn add_particle(&mut self, particle: Particle) {
         self.catalog.id.push(self.next_particle_id);
-        self.next_particle_id += 1;
 
         self.catalog.name.push(particle.name);
         self.catalog.radius.push(particle.radius);
@@ -65,14 +64,23 @@ impl ParticleSystem {
 
         self.state.velocities.push(&particle.velocity);
 
-        self.state.alive_statuses.push(true);
+        if particle.mass == 0.0 {
+            self.state.massless_indices.push(self.next_particle_id);
+        } else {
+            self.state.massive_indices.push(self.next_particle_id);
+        }
 
         debug_assert_eq!(self.particle_count(), self.catalog.name.len());
         debug_assert_eq!(self.particle_count(), self.catalog.radius.len());
         debug_assert_eq!(self.particle_count(), self.state.masses.len());
         debug_assert_eq!(self.particle_count(), self.state.positions.len());
         debug_assert_eq!(self.particle_count(), self.state.velocities.len());
-        debug_assert_eq!(self.particle_count(), self.state.alive_statuses.len());
+        debug_assert_eq!(
+            self.particle_count(),
+            self.state.massive_indices.len() + self.state.massless_indices.len()
+        );
+
+        self.next_particle_id += 1;
     }
 }
 
@@ -90,8 +98,6 @@ pub struct ParticleCatalog {
 }
 
 /// Time-varying numerical state stored for all particles.
-///
-/// A mass of `None` marks a massless test particle.
 #[derive(Default, Clone)]
 pub struct ParticleState {
     /// Particle masses; `None` denotes a massless test particle.
@@ -103,15 +109,18 @@ pub struct ParticleState {
     /// Cartesian velocities.
     velocities: Vector3Series,
 
-    /// Whether each particle is active in the system.
-    alive_statuses: Vec<bool>,
+    /// idx of massive particles
+    massive_indices: Vec<usize>,
+
+    /// idx of massless test particles
+    massless_indices: Vec<usize>,
 }
 
 impl ParticleState {
     /// Returns the number of particles currently represented in the state.
     #[must_use]
     pub fn particle_count(&self) -> usize {
-        self.alive_statuses.len()
+        self.masses.len()
     }
 
     /// Returns the per-particle mass values, including `None` for massless test
@@ -156,10 +165,16 @@ impl ParticleState {
         (&mut self.positions, &mut self.velocities)
     }
 
-    /// Returns the per-particle active/inactive flags.
+    /// returns a slice of massive particle indeices
     #[must_use]
-    pub fn alive_statuses(&self) -> &[bool] {
-        &self.alive_statuses
+    pub fn massive_indices(&self) -> &[usize] {
+        &self.massive_indices
+    }
+
+    /// reutnrs a slice of massless test particle indices
+    #[must_use]
+    pub fn massless_indices(&self) -> &[usize] {
+        &self.massless_indices
     }
 }
 

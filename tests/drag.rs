@@ -114,7 +114,7 @@ fn linear_drag_causes_exponential_velocity_decay() {
 
 #[test]
 fn gravity_and_drag_inspiral_binary() {
-    let mut system = ParticleSystem::new_system();
+    let mut system = ParticleSystem::new();
 
     let particle1_mass = 1.0;
     let particle2_mass = 1.0;

@@ -11,7 +11,7 @@ use std::f64::consts::PI;
 fn outer_solar_system_particles() -> ParticleSystem {
     //nsim gravity
     debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
-    let mut particle_system = ParticleSystem::new_system();
+    let mut particle_system = ParticleSystem::new();
     // given velocites are in AU/day so we convert
     let velocity_scale = 365.2425 / (2.0 * PI);
     let central_mass = 1.0;

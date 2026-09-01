@@ -157,7 +157,7 @@ fn leapfrog_convergence_and_time_reversibility() {
 
     let one_period = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
 
-    let mut initial_system = ParticleSystem::new_system();
+    let mut initial_system = ParticleSystem::new();
 
     initial_system.add_particle(Particle {
         name: String::from("Sol"),

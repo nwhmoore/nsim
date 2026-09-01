@@ -11,7 +11,7 @@ use std::f64::consts::PI;
 /// energy for a two massive particle system in a highly eccentric orbit.
 #[test]
 fn two_body_conservation() {
-    let mut system = ParticleSystem::new_system();
+    let mut system = ParticleSystem::new();
 
     system.add_particle(Particle {
         name: String::from("Sol"),
@@ -172,7 +172,7 @@ fn figure_eight_periodic_orbit() {
         },
     ];
 
-    let mut system = ParticleSystem::new_system();
+    let mut system = ParticleSystem::new();
     for i in 0..3 {
         system.add_particle(Particle {
             name: format!("Body{i}"),

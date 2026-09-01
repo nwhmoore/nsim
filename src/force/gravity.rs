@@ -18,30 +18,59 @@ impl Force for NewtonianGravity {
     fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = state.positions();
         let masses = state.masses();
-        let n = state.particle_count();
+        let massive_indices = state.massive_indices();
 
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let dx = positions.x[i] - positions.x[j];
-                let dy = positions.y[i] - positions.y[j];
-                let dz = positions.z[i] - positions.z[j];
+        for (i, &massive1_idx) in massive_indices.iter().enumerate() {
+            for &massive2_idx in massive_indices.iter().skip(i + 1) {
+                let dx = positions.x[massive1_idx] - positions.x[massive2_idx];
+                let dy = positions.y[massive1_idx] - positions.y[massive2_idx];
+                let dz = positions.z[massive1_idx] - positions.z[massive2_idx];
 
                 let r2 = dx * dx + dy * dy + dz * dz;
                 // TODO: make an explicit collision policy
-                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                debug_assert!(
+                    r2 > 0.0,
+                    "particles {massive1_idx} and {massive2_idx} occupy the same position"
+                );
                 let inv_r = r2.sqrt().recip();
                 let inv_r3 = inv_r * inv_r * inv_r;
 
-                let scale_i = -GRAVITY * masses[j] * inv_r3;
-                let scale_j = GRAVITY * masses[i] * inv_r3;
+                let scale_i = -GRAVITY * masses[massive2_idx] * inv_r3;
+                let scale_j = GRAVITY * masses[massive1_idx] * inv_r3;
 
-                output.accelerations.x[i] += dx * scale_i;
-                output.accelerations.y[i] += dy * scale_i;
-                output.accelerations.z[i] += dz * scale_i;
+                output.accelerations.x[massive1_idx] += dx * scale_i;
+                output.accelerations.y[massive1_idx] += dy * scale_i;
+                output.accelerations.z[massive1_idx] += dz * scale_i;
 
-                output.accelerations.x[j] += dx * scale_j;
-                output.accelerations.y[j] += dy * scale_j;
-                output.accelerations.z[j] += dz * scale_j;
+                output.accelerations.x[massive2_idx] += dx * scale_j;
+                output.accelerations.y[massive2_idx] += dy * scale_j;
+                output.accelerations.z[massive2_idx] += dz * scale_j;
+            }
+        }
+
+        // preliminary benches suggest to NOT fold the test particle loop into
+        // the above `part1` loop
+        let massless_indices = state.massless_indices();
+        for &test_idx in massless_indices {
+            for &massive_idx in massive_indices {
+                let dx = positions.x[test_idx] - positions.x[massive_idx];
+                let dy = positions.y[test_idx] - positions.y[massive_idx];
+                let dz = positions.z[test_idx] - positions.z[massive_idx];
+
+                let r2 = dx * dx + dy * dy + dz * dz;
+                // TODO: make an explicit collision policy
+                debug_assert!(
+                    r2 > 0.0,
+                    "particles {test_idx} and {massive_idx} occupy the same position"
+                );
+                let inv_r = r2.sqrt().recip();
+                let inv_r3 = inv_r * inv_r * inv_r;
+
+                let scale = -GRAVITY * masses[massive_idx] * inv_r3;
+
+                output.accelerations.x[test_idx] += dx * scale;
+                output.accelerations.y[test_idx] += dy * scale;
+                output.accelerations.z[test_idx] += dz * scale;
             }
         }
     }
@@ -49,22 +78,26 @@ impl Force for NewtonianGravity {
     fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
         let positions = state.positions();
         let masses = state.masses();
-        let n = state.particle_count();
+        let massive_indices = state.massive_indices();
 
         let mut potential_energy = KahanAccumulator::default();
 
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let dx = positions.x[i] - positions.x[j];
-                let dy = positions.y[i] - positions.y[j];
-                let dz = positions.z[i] - positions.z[j];
+        for (i, &massive1_idx) in massive_indices.iter().enumerate() {
+            for &massive2_idx in massive_indices.iter().skip(i + 1) {
+                let dx = positions.x[massive1_idx] - positions.x[massive2_idx];
+                let dy = positions.y[massive1_idx] - positions.y[massive2_idx];
+                let dz = positions.z[massive1_idx] - positions.z[massive2_idx];
 
                 let r2 = dx * dx + dy * dy + dz * dz;
                 // TODO: make an explicit collision policy
-                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                debug_assert!(
+                    r2 > 0.0,
+                    "particles {massive1_idx} and {massive2_idx} occupy the same position"
+                );
                 let inv_r = r2.sqrt().recip();
 
-                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r);
+                potential_energy
+                    .add(-GRAVITY * masses[massive1_idx] * masses[massive2_idx] * inv_r);
             }
         }
 
@@ -80,58 +113,92 @@ impl Force for CompensatedNewtonianGravity {
     fn evaluate(&self, state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = state.positions();
         let masses = state.masses();
-        let n = state.particle_count();
+        let massive_indices = state.massive_indices();
 
-        let mut accumulator = Kahan3Series::with_len(n);
+        let mut accumulator = Kahan3Series::with_len(state.particle_count());
 
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let dx = positions.x[i] - positions.x[j];
-                let dy = positions.y[i] - positions.y[j];
-                let dz = positions.z[i] - positions.z[j];
+        for (i, &massive1_idx) in massive_indices.iter().enumerate() {
+            for &massive2_idx in massive_indices.iter().skip(i + 1) {
+                let dx = positions.x[massive1_idx] - positions.x[massive2_idx];
+                let dy = positions.y[massive1_idx] - positions.y[massive2_idx];
+                let dz = positions.z[massive1_idx] - positions.z[massive2_idx];
 
                 let r2 = dx * dx + dy * dy + dz * dz;
                 // TODO: make an explicit collision policy
-                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                debug_assert!(
+                    r2 > 0.0,
+                    "particles {massive1_idx} and {massive2_idx} occupy the same position"
+                );
                 let inv_r = r2.sqrt().recip();
                 let inv_r3 = inv_r * inv_r * inv_r;
 
-                let scale_i = -GRAVITY * masses[j] * inv_r3;
-                let scale_j = GRAVITY * masses[i] * inv_r3;
+                let scale_i = -GRAVITY * masses[massive2_idx] * inv_r3;
+                let scale_j = GRAVITY * masses[massive1_idx] * inv_r3;
 
-                accumulator.x[i].add(dx * scale_i);
-                accumulator.y[i].add(dy * scale_i);
-                accumulator.z[i].add(dz * scale_i);
+                accumulator.x[massive1_idx].add(dx * scale_i);
+                accumulator.y[massive1_idx].add(dy * scale_i);
+                accumulator.z[massive1_idx].add(dz * scale_i);
 
-                accumulator.x[j].add(dx * scale_j);
-                accumulator.y[j].add(dy * scale_j);
-                accumulator.z[j].add(dz * scale_j);
+                accumulator.x[massive2_idx].add(dx * scale_j);
+                accumulator.y[massive2_idx].add(dy * scale_j);
+                accumulator.z[massive2_idx].add(dz * scale_j);
             }
-            output.accelerations.x[i] = accumulator.x[i].total();
-            output.accelerations.y[i] = accumulator.y[i].total();
-            output.accelerations.z[i] = accumulator.z[i].total();
+            output.accelerations.x[massive1_idx] = accumulator.x[massive1_idx].total();
+            output.accelerations.y[massive1_idx] = accumulator.y[massive1_idx].total();
+            output.accelerations.z[massive1_idx] = accumulator.z[massive1_idx].total();
+        }
+
+        let massless_indices = state.massless_indices();
+        for &test_idx in massless_indices {
+            for &source_idx in massive_indices {
+                let dx = positions.x[test_idx] - positions.x[source_idx];
+                let dy = positions.y[test_idx] - positions.y[source_idx];
+                let dz = positions.z[test_idx] - positions.z[source_idx];
+
+                let r2 = dx * dx + dy * dy + dz * dz;
+                // TODO: make an explicit collision policy
+                debug_assert!(
+                    r2 > 0.0,
+                    "particles {test_idx} and {source_idx} occupy the same position"
+                );
+                let inv_r = r2.sqrt().recip();
+                let inv_r3 = inv_r * inv_r * inv_r;
+
+                let scale_i = -GRAVITY * masses[source_idx] * inv_r3;
+
+                accumulator.x[test_idx].add(dx * scale_i);
+                accumulator.y[test_idx].add(dy * scale_i);
+                accumulator.z[test_idx].add(dz * scale_i);
+            }
+            output.accelerations.x[test_idx] = accumulator.x[test_idx].total();
+            output.accelerations.y[test_idx] = accumulator.y[test_idx].total();
+            output.accelerations.z[test_idx] = accumulator.z[test_idx].total();
         }
     }
 
     fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
         let positions = state.positions();
         let masses = state.masses();
-        let n = state.particle_count();
+        let massive_indices = state.massive_indices();
 
         let mut potential_energy = KahanAccumulator::default();
 
-        for i in 0..n {
-            for j in (i + 1)..n {
-                let dx = positions.x[i] - positions.x[j];
-                let dy = positions.y[i] - positions.y[j];
-                let dz = positions.z[i] - positions.z[j];
+        for (i, &massive1_idx) in massive_indices.iter().enumerate() {
+            for &massive2_idx in massive_indices.iter().skip(i + 1) {
+                let dx = positions.x[massive1_idx] - positions.x[massive2_idx];
+                let dy = positions.y[massive1_idx] - positions.y[massive2_idx];
+                let dz = positions.z[massive1_idx] - positions.z[massive2_idx];
 
                 let r2 = dx * dx + dy * dy + dz * dz;
                 // TODO: make an explicit collision policy
-                debug_assert!(r2 > 0.0, "particles {i} and {j} occupy the same position");
+                debug_assert!(
+                    r2 > 0.0,
+                    "particles {massive1_idx} and {massive2_idx} occupy the same position"
+                );
                 let inv_r = r2.sqrt().recip();
 
-                potential_energy.add(-GRAVITY * masses[i] * masses[j] * inv_r);
+                potential_energy
+                    .add(-GRAVITY * masses[massive1_idx] * masses[massive2_idx] * inv_r);
             }
         }
 

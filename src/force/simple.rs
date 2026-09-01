@@ -37,14 +37,16 @@ impl Force for HarmonicPotential {
     fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = particle_state.positions();
         let spring_constant = self.k;
+        let massive_indices = particle_state.massive_indices();
+        let mass = particle_state.masses();
 
-        for (i, &mass) in particle_state.masses().iter().enumerate() {
+        for &i in massive_indices {
             let dx = positions.x[i] - self.center.x;
             let dy = positions.y[i] - self.center.y;
             let dz = positions.z[i] - self.center.z;
 
-            debug_assert!(mass > 0.0);
-            let scale = -spring_constant / mass;
+            debug_assert!(mass[i] > 0.0);
+            let scale = -spring_constant / mass[i];
 
             output.accelerations.x[i] += dx * scale;
             output.accelerations.y[i] += dy * scale;
@@ -54,11 +56,11 @@ impl Force for HarmonicPotential {
 
     fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
         let positions = state.positions();
-        let n = state.particle_count();
+        let massive_indices = state.massive_indices();
 
         let mut potential_energy = KahanAccumulator::default();
 
-        for i in 0..n {
+        for &i in massive_indices {
             let dx = positions.x[i] - self.center.x;
             let dy = positions.y[i] - self.center.y;
             let dz = positions.z[i] - self.center.z;
