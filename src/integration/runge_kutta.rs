@@ -2,7 +2,8 @@ use crate::{
     force::ForceSystem, integration::Integrator, math_util::Vector3Series, particle::ParticleState,
 };
 
-/// 4th order integrator, four force evalutaions per time step
+/// Fourth-order Runge–Kutta integrator using four force evaluations per
+/// timestep.
 #[derive(Clone, Default)]
 pub struct RungeKutta4 {
     intermediate: ParticleState,

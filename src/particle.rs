@@ -14,7 +14,7 @@ pub struct ParticleSystem {
     catalog: ParticleCatalog,
     /// Mutable numerical state used by the integrator.
     state: ParticleState,
-    /// Particle ID number to be assigned next.
+    /// The next particle ID to assign.
     next_particle_id: usize,
 }
 
@@ -100,19 +100,15 @@ pub struct ParticleCatalog {
 /// Time-varying numerical state stored for all particles.
 #[derive(Default, Clone)]
 pub struct ParticleState {
-    /// Particle masses; `None` denotes a massless test particle.
+    /// Particle masses; zero denotes a massless test particle.
     masses: Vec<f64>,
-
     /// Cartesian positions.
     positions: Vector3Series,
-
     /// Cartesian velocities.
     velocities: Vector3Series,
-
-    /// idx of massive particles
+    /// Indices of massive particles.
     massive_indices: Vec<usize>,
-
-    /// idx of massless test particles
+    /// Indices of massless test particles.
     massless_indices: Vec<usize>,
 }
 
@@ -123,7 +119,7 @@ impl ParticleState {
         self.masses.len()
     }
 
-    /// Returns the per-particle mass values, including `None` for massless test
+    /// Returns the per-particle masses, including zero for massless test
     /// particles.
     #[must_use]
     pub fn masses(&self) -> &[f64] {
@@ -152,26 +148,24 @@ impl ParticleState {
         &mut self.velocities
     }
 
-    /// returns a tuple containing (positions, velocities) of all
-    /// particles
+    /// Returns the position and velocity series for all particles.
     #[must_use]
     pub fn positions_and_velocities(&self) -> (&Vector3Series, &Vector3Series) {
         (&self.positions, &self.velocities)
     }
 
-    /// returns a tuple containing mutable (positions, velocities) of all
-    /// particles
+    /// Returns mutable position and velocity series for all particles.
     pub fn positions_and_velocities_mut(&mut self) -> (&mut Vector3Series, &mut Vector3Series) {
         (&mut self.positions, &mut self.velocities)
     }
 
-    /// returns a slice of massive particle indeices
+    /// Returns the indices of massive particles.
     #[must_use]
     pub fn massive_indices(&self) -> &[usize] {
         &self.massive_indices
     }
 
-    /// reutnrs a slice of massless test particle indices
+    /// Returns the indices of massless test particles.
     #[must_use]
     pub fn massless_indices(&self) -> &[usize] {
         &self.massless_indices

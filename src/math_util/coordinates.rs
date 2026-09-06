@@ -1,25 +1,25 @@
-//! Coordinate transformations and utilities
+//! Coordinate transformations and utilities.
 
 use crate::{force::GRAVITY, math_util::Vector3};
 
-/// Keplerian orbital elements
+/// Keplerian orbital elements used to construct Cartesian state vectors.
 pub struct OrbitalElements {
-    /// Semi-major axis
+    /// Semi-major axis.
     pub semi: f64,
-    /// Eccentricity
+    /// Eccentricity.
     pub ecc: f64,
-    /// Inclination (radians)
+    /// Inclination in radians.
     pub inc: f64,
-    /// Argument of pericenter (radians)
+    /// Argument of pericenter in radians.
     pub arg_peri: f64,
-    /// Longitude of ascending node (radians)
+    /// Longitude of the ascending node in radians.
     pub long_asc: f64,
-    /// Mean anomaly (radians)
+    /// Mean anomaly in radians.
     pub mean_anom: f64,
 }
 
 impl OrbitalElements {
-    /// Transform keplerian orbital elements to cartesian state vectors
+    /// Converts the elements to Cartesian position and velocity vectors.
     #[must_use]
     pub fn to_cart(&self, central_mass: f64) -> (Vector3, Vector3) {
         let mu = central_mass * GRAVITY;

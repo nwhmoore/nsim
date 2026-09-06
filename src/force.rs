@@ -12,16 +12,14 @@ pub use drag::*;
 pub use gravity::*;
 pub use harmonic::*;
 
-/// forces being added to the simulation
+/// Forces configured for a simulation.
 #[derive(Default, Clone)]
 pub struct ForceConfiguration {
     forces: Vec<Box<dyn Force>>,
 }
 
 impl ForceConfiguration {
-    /// add a force to the simulation
-    ///
-    /// note: do not add a single force more than once
+    /// Adds a force to the configuration. Add each force instance only once.
     pub fn add_force<F>(&mut self, force: F)
     where
         F: Force + 'static,
@@ -30,15 +28,14 @@ impl ForceConfiguration {
     }
 }
 
-/// force system which holds the config and the internal acceleration buffer for
-/// all particles
+/// Force configuration and reusable acceleration storage for all particles.
 pub struct ForceSystem {
     configuration: ForceConfiguration,
     buffer: ForceBuffer,
 }
 
 impl ForceSystem {
-    /// creates a new force system
+    /// Creates a force system for `particle_count` particles.
     #[must_use]
     pub fn new(configuration: ForceConfiguration, particle_count: usize) -> Self {
         Self {
@@ -47,7 +44,7 @@ impl ForceSystem {
         }
     }
 
-    /// evaluates all forces on all particles in a given state
+    /// Evaluates all configured forces for the supplied state.
     pub fn evaluate(&mut self, particle_state: &ParticleState) {
         self.buffer.clear();
 
@@ -60,36 +57,36 @@ impl ForceSystem {
         }
     }
 
-    /// returns the force buffer
+    /// Returns the current force buffer.
     #[must_use]
     pub fn buffer(&self) -> &ForceBuffer {
         &self.buffer
     }
 
-    /// returns the configured forces
+    /// Returns the configured forces.
     #[must_use]
     pub fn configured_forces(&self) -> &[Box<dyn Force>] {
         &self.configuration.forces
     }
 }
 
-/// defines a force
+/// Computes accelerations and, optionally, potential energy.
 pub trait Force: ForceClone {
-    /// evaluates this force on all particles
+    /// Adds this force's accelerations to the evaluation output.
     fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>);
 
-    /// calculates the potential energy associated with this force
+    /// Returns this force's potential energy, if defined.
     fn calculate_potential_energy(&self, _particle_state: &ParticleState) -> Option<f64> {
         None
     }
 }
 
-/// scratch work space for the force evaluation
+/// Scratch space used during force evaluation.
 pub struct ForceEvaluation<'a> {
     accelerations: &'a mut Vector3Series,
 }
 
-/// buffered accelerations of the particles
+/// Accelerations buffered for all particles.
 pub struct ForceBuffer {
     accelerations: Vector3Series,
 }
@@ -115,9 +112,9 @@ impl ForceBuffer {
     }
 }
 
-/// lets us clone the force system
+/// Supports cloning boxed force implementations.
 pub trait ForceClone {
-    /// clones
+    /// Clones the boxed force.
     fn clone_box(&self) -> Box<dyn Force>;
 }
 

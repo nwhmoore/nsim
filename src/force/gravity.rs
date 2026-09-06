@@ -1,4 +1,4 @@
-//! Gravitational acceleration, potential-energy calculation
+//! Gravitational acceleration and potential-energy calculation.
 
 use crate::{
     force::{Force, ForceEvaluation},

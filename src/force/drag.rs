@@ -1,13 +1,9 @@
 use crate::force::Force;
 
-/// a scalar drag force defined by the damping rate
-/// 
-/// TODO: add formula
+/// Applies acceleration opposite to velocity, scaled by `damping_rate`.
 #[derive(Clone)]
 pub struct ScalarDrag {
-    /// damping rate
-    /// 
-    /// TODO: add the math here
+    /// Scalar damping rate applied to each velocity component.
     pub damping_rate: f64,
 }
 

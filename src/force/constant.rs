@@ -8,7 +8,7 @@ use crate::{
 /// mostly for testing.
 #[derive(Clone)]
 pub struct ConstantAccel {
-    /// the constant acceleration applied
+    /// Constant acceleration applied to every particle.
     pub accel_vec: Vector3,
 }
 

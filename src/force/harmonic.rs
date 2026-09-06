@@ -4,12 +4,13 @@ use crate::{
     particle::ParticleState,
 };
 
-/// Applies harmonic oscillator potential ``a_i`` = -(k / ``m_i``) (``x_i`` - center)
+/// Applies a harmonic potential with acceleration `-(k / m) * (position -
+/// center)`.
 #[derive(Clone)]
 pub struct HarmonicPotential {
-    /// spring constant
+    /// Spring constant.
     pub k: f64,
-    /// center of potential
+    /// Center of the potential.
     pub center: Vector3,
 }
 

@@ -13,19 +13,19 @@ mod runge_kutta;
 pub use leapfrog::*;
 pub use runge_kutta::*;
 
-/// which integrator that advances the simulation
+/// Advances a simulation by fixed timesteps.
 pub trait Integrator {
-    /// performs any required initialization when simulation building
+    /// Performs any required initialization during simulation construction.
     fn initialize(&mut self, particle_state: &ParticleState);
 
-    /// advances the simulation one timestep
+    /// Advances the state by one timestep.
     fn evaluate_timestep(&mut self, state: &mut ParticleState, forces: &mut ForceSystem, dt: f64);
 
-    /// provides a warning when simulation building
+    /// Warns about configuration issues during simulation construction.
     fn warn();
 }
 
-/// empy integrator used as a default or used for testing.
+/// No-op integrator used by default and in tests.
 pub struct NoIntegrator;
 
 impl Integrator for NoIntegrator {

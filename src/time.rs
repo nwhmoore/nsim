@@ -1,13 +1,13 @@
-//! Handles the internal clock, time step, and scheduling of the simulation
+//! Internal clock, timestep, and diagnostic scheduling.
 
-/// Contains the internal clock, time step, and scheduling of the simulation
+/// Simulation clock, timestep, and diagnostic schedule.
 #[derive(Clone)]
 pub struct Time {
-    /// internal clock, current time
+    /// Current simulation time.
     pub(crate) current: f64,
-    /// time step
+    /// Simulation timestep.
     pub(crate) step: f64,
-    /// diagnostic schedule
+    /// Diagnostic recording schedule.
     pub(crate) diagnostic_schedule: DiagnosticSchedule,
 }
 

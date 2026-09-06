@@ -9,7 +9,7 @@ use crate::{
     time::Time,
 };
 
-/// Struct for building the simulaiton
+/// Builder for configuring a simulation.
 #[derive(Clone)]
 pub struct SimulationBuilder<I: Integrator> {
     particles: ParticleSystem,
@@ -20,7 +20,8 @@ pub struct SimulationBuilder<I: Integrator> {
 }
 
 impl<I: Integrator> SimulationBuilder<I> {
-    /// Builds and initializes the sim.
+    /// Builds the simulation, evaluates its initial forces, and records its
+    /// initial diagnostics.
     pub fn build(mut self) -> Simulation<I> {
         let particle_count = self.particles.particle_count();
 
@@ -48,35 +49,35 @@ impl<I: Integrator> SimulationBuilder<I> {
         sim
     }
 
-    /// replaces the builder's particle system with input system.
+    /// Replaces the builder's particle system.
     #[allow(clippy::return_self_not_must_use)]
     pub fn with_particle_system(mut self, particle_system: ParticleSystem) -> Self {
         self.particles = particle_system;
         self
     }
 
-    /// appends a particle to the current builder's system.
+    /// Adds a particle to the builder's particle system.
     #[allow(clippy::return_self_not_must_use)]
     pub fn add_particle(mut self, particle: Particle) -> Self {
         self.particles.add_particle(particle);
         self
     }
 
-    /// adds a force to the force system
+    /// Adds a force to the simulation.
     #[allow(clippy::return_self_not_must_use)]
     pub fn add_force<F: Force + 'static>(mut self, force: F) -> Self {
         self.force_config.add_force(force);
         self
     }
 
-    /// sets the time interval to record diagnostics
+    /// Sets the interval between diagnostic records.
     #[allow(clippy::return_self_not_must_use)]
     pub fn set_diagnostic_interval(mut self, dt: f64) -> Self {
         self.time.set_diagnostic_interval(dt);
         self
     }
 
-    /// sets the timestep of the simulation
+    /// Sets the simulation timestep.
     #[allow(clippy::return_self_not_must_use)]
     pub fn set_time_step(mut self, dt: f64) -> Self {
         self.time.step = dt;
@@ -85,8 +86,7 @@ impl<I: Integrator> SimulationBuilder<I> {
 }
 
 impl SimulationBuilder<NoIntegrator> {
-    /// defines which integrator the simulation uses. If not set, will default
-    /// to [`NoIntegrator`]
+    /// Selects the integrator used by the simulation.
     pub fn use_integrator<I: Integrator>(self, integrator: I) -> SimulationBuilder<I> {
         SimulationBuilder {
             particles: self.particles,
@@ -109,7 +109,7 @@ pub struct Simulation<I: Integrator> {
 }
 
 impl Simulation<NoIntegrator> {
-    /// Creates a new [`SimulationBuilder`]
+    /// Creates a new [`SimulationBuilder`].
     #[allow(clippy::new_ret_no_self)]
     #[must_use]
     pub fn new() -> SimulationBuilder<NoIntegrator> {
@@ -124,7 +124,7 @@ impl Simulation<NoIntegrator> {
 }
 
 impl<I: Integrator> Simulation<I> {
-    /// advances the simulation one time step
+    /// Advances the simulation by one timestep.
     pub fn run_one_step(&mut self) {
         self.integrator.evaluate_timestep(
             self.particles.state_mut(),
@@ -146,46 +146,46 @@ impl<I: Integrator> Simulation<I> {
         }
     }
 
-    /// runs the simulation the given number of time steps
+    /// Advances the simulation by `steps` timesteps.
     pub fn run_steps(&mut self, steps: usize) {
         for _ in 0..steps {
             self.run_one_step();
         }
     }
 
-    /// runs the simulation until the internal clock will exceed the given time.
+    /// Advances while another complete timestep would not exceed `end_time`.
     pub fn run_until(&mut self, end_time: f64) {
         while self.current_time() + self.time.step <= end_time {
             self.run_one_step();
         }
     }
 
-    /// returns the particle system
+    /// Returns the particle system.
     pub fn particles(&self) -> &ParticleSystem {
         &self.particles
     }
 
-    /// returns the mutable particl system
+    /// Returns mutable access to the particle system.
     pub fn particles_mut(&mut self) -> &mut ParticleSystem {
         &mut self.particles
     }
 
-    /// returns the diagnostics
+    /// Returns the recorded diagnostics.
     pub fn diagnostics(&self) -> &Diagnostics {
         &self.diagnostics
     }
 
-    /// returns the current time step
+    /// Returns the simulation timestep.
     pub fn get_time_step(&self) -> f64 {
         self.time.step
     }
 
-    /// sets the simulation's internal clock
+    /// Returns the simulation's current time.
     pub fn current_time(&self) -> f64 {
         self.time.current
     }
 
-    /// returns the force system
+    /// Returns the force system.
     pub fn force_system(&self) -> &ForceSystem {
         &self.forces
     }

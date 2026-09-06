@@ -1,6 +1,6 @@
-//! Whole-system self recorded as structure-of-arrays time series.
+//! Whole-system diagnostic records.
 //!
-//! Global quantities include only active particles with a `Some` mass value.
+//! Global quantities include only active particles with a nonzero mass.
 //! Massless test particles are intentionally excluded from total mass,
 //! kinetic energy, momentum, angular momentum, and center-of-mass quantities.
 
@@ -12,8 +12,7 @@ use crate::{
 
 /// Time series of global quantities derived from simulation states.
 ///
-/// Every field has one entry per call to [`Diagnostics::record`]. The entry at
-/// a given index therefore refers to the time at the same index in [`Self::time`].
+/// Each call to [`Diagnostics::record_current_state`] appends one record.
 #[derive(Default, Clone)]
 pub struct Diagnostics {
     records: Vec<DiagnosticRecord>,
@@ -39,7 +38,7 @@ impl Diagnostics {
 
         for &idx in massive_indices {
             let mass = masses[idx];
-            
+
             let rx = positions.x[idx];
             let ry = positions.y[idx];
             let rz = positions.z[idx];
@@ -102,13 +101,13 @@ impl Diagnostics {
         self.records.push(diagnostic_record);
     }
 
-    /// returns the records
+    /// Returns all recorded diagnostic samples.
     #[must_use]
     pub fn records(&self) -> &[DiagnosticRecord] {
         &self.records
     }
 
-    /// returns a specific record
+    /// Returns the diagnostic sample at `idx`.
     #[must_use]
     pub fn get_sample(&self, idx: usize) -> &DiagnosticRecord {
         &self.records[idx]
@@ -127,10 +126,9 @@ pub struct DiagnosticRecord {
     potential_energy: f64,
     /// Sum of kinetic and gravitational potential energy.
     total_energy: f64,
-    /// Total linear momentum, stored as parallel component series.
+    /// Total linear momentum.
     linear_momentum: Vector3,
-    /// Total angular momentum about the simulation origin, stored as parallel
-    /// component series.
+    /// Total angular momentum about the simulation origin.
     angular_momentum: Vector3,
     /// Center-of-mass position of the active massive bodies.
     center_of_mass_position: Vector3,
@@ -139,54 +137,54 @@ pub struct DiagnosticRecord {
 }
 
 impl DiagnosticRecord {
-    /// returns current time
+    /// Returns the simulation time for this record.
     #[must_use]
     pub fn current_time(&self) -> f64 {
         self.current_time
     }
-    /// returns total mass
+    /// Returns the total mass of active massive bodies.
     #[must_use]
     pub fn total_mass(&self) -> f64 {
         self.total_mass
     }
 
-    /// returns kinetic energy
+    /// Returns the total kinetic energy of active massive bodies.
     #[must_use]
     pub fn kinetic_energy(&self) -> f64 {
         self.kinetic_energy
     }
 
-    /// returns potential energy
+    /// Returns the total potential energy reported by the configured forces.
     #[must_use]
     pub fn potential_energy(&self) -> f64 {
         self.potential_energy
     }
 
-    /// returns total energy
+    /// Returns the sum of kinetic and potential energy.
     #[must_use]
     pub fn total_energy(&self) -> f64 {
         self.total_energy
     }
 
-    /// returns linear momentum
+    /// Returns the total linear momentum.
     #[must_use]
     pub fn linear_momentum(&self) -> Vector3 {
         self.linear_momentum
     }
 
-    /// returns angular momentum
+    /// Returns the total angular momentum about the origin.
     #[must_use]
     pub fn angular_momentum(&self) -> Vector3 {
         self.angular_momentum
     }
 
-    /// returns center of mass position
+    /// Returns the center-of-mass position of active massive bodies.
     #[must_use]
     pub fn center_of_mass_position(&self) -> Vector3 {
         self.center_of_mass_position
     }
 
-    /// returns center of mass velocity
+    /// Returns the center-of-mass velocity of active massive bodies.
     #[must_use]
     pub fn center_of_mass_velocity(&self) -> Vector3 {
         self.center_of_mass_velocity

@@ -1,4 +1,4 @@
-//! contains the Kahan accumulator to account for floating point error
+//! Kahan compensated summation utilities.
 
 use crate::math_util::Vector3;
 use std::f64;

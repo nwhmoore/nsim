@@ -59,13 +59,13 @@ impl Vector3 {
     pub fn square(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
-    /// returns the magnitude of a vector
+    /// Returns the Euclidean norm of the vector.
     #[must_use]
     pub fn norm(&self) -> f64 {
         self.square().sqrt()
     }
 
-    /// rotate the vector around the z-axis
+    /// Rotates the vector around the z-axis by `angle` radians.
     #[must_use]
     pub fn rotate_z(self, angle: f64) -> Self {
         let (sin, cos) = angle.sin_cos();
@@ -77,7 +77,7 @@ impl Vector3 {
         }
     }
 
-    /// rotate the vector around the x-axis
+    /// Rotates the vector around the x-axis by `angle` radians.
     #[must_use]
     pub fn rotate_x(self, angle: f64) -> Self {
         let (sin, cos) = angle.sin_cos();
@@ -105,7 +105,7 @@ pub struct Vector3Series {
 }
 
 impl Vector3Series {
-    /// fills each series by cloning [`value`]
+    /// Fills every component series with `value`.
     pub fn fill(&mut self, value: f64) {
         self.x.fill(value);
         self.y.fill(value);
@@ -122,7 +122,7 @@ impl Vector3Series {
         }
     }
 
-    /// creates empty series with capacity
+    /// Creates empty component series with the given capacity.
     #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Vector3Series {
@@ -133,8 +133,7 @@ impl Vector3Series {
     }
     /// Returns the vector stored at `idx`.
     ///
-    /// This creates an entirely new structure, DO NOT USE IN FORCE EVALUATION
-    /// OR INTEGRATION. For diagnostic and testing API only.
+    /// This creates a new `Vector3` and is intended for diagnostics and tests.
     #[must_use]
     pub fn vector_at(&self, idx: usize) -> Vector3 {
         Vector3 {
@@ -153,7 +152,7 @@ impl Vector3Series {
         self.x.len()
     }
 
-    /// checks if empty
+    /// Returns whether the series contains no vectors.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.x.is_empty()

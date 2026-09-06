@@ -1,4 +1,4 @@
 # nsim
 
-`nsim` is a small Rust N-body simulation prototype. It features a modular
-integrator and force system.
+`nsim` is a small Rust N-body simulation prototype with modular integrators and
+force systems.
