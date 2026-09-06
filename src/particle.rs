@@ -7,22 +7,38 @@ use crate::math_util::{Vector3, Vector3Series};
 /// The catalog and state use a structure-of-arrays layout. Their vectors must
 /// remain aligned: a particle at index `i` has its name and metadata in the
 /// catalog's index `i` and its position, velocity, and mass in the state's
-/// index `i`.
+/// index `i`. Built systems store massive particles first and massless
+/// particles second.
 #[derive(Default, Clone)]
 pub struct ParticleSystem {
     /// Stable catalog metadata for every particle.
     catalog: ParticleCatalog,
     /// Mutable numerical state used by the integrator.
     state: ParticleState,
-    /// The next particle ID to assign.
-    next_particle_id: usize,
 }
 
 impl ParticleSystem {
-    /// Creates an empty particle system.
+    /// Creates a new [`ParticleSystemBuilder`].
     #[must_use]
-    pub fn new() -> Self {
-        ParticleSystem::default()
+    pub fn builder() -> ParticleSystemBuilder {
+        ParticleSystemBuilder::default()
+    }
+
+    fn with_capacity(n: usize) -> Self {
+        ParticleSystem {
+            catalog: ParticleCatalog {
+                id: Vec::with_capacity(n),
+                name: Vec::with_capacity(n),
+                radius: Vec::with_capacity(n),
+            },
+            state: ParticleState {
+                masses: Vec::with_capacity(n),
+                positions: Vector3Series::with_capacity(n),
+                velocities: Vector3Series::with_capacity(n),
+                massive_count: 0,
+                particle_count: 0,
+            },
+        }
     }
 
     /// Returns the stable catalog metadata for the particles in this system.
@@ -45,79 +61,7 @@ impl ParticleSystem {
     /// Returns the number of particles currently stored in the system.
     #[must_use]
     pub fn particle_count(&self) -> usize {
-        self.catalog.id.len()
-    }
-
-    /// Adds a particle and assigns it the next available catalog ID.
-    ///
-    /// The particle's metadata and state are appended at the same index in
-    /// their respective arrays.
-    pub fn add_particle(&mut self, particle: Particle) {
-        self.catalog.id.push(self.next_particle_id);
-
-        self.catalog.name.push(particle.name);
-        self.catalog.radius.push(particle.radius);
-
-        self.state.masses.push(particle.mass);
-
-        self.state.positions.push(&particle.position);
-
-        self.state.velocities.push(&particle.velocity);
-
-        self.next_particle_id += 1;
-        self.state.particle_count += 1;
-
-        debug_assert_eq!(self.particle_count(), self.catalog.name.len());
-        debug_assert_eq!(self.particle_count(), self.catalog.radius.len());
-        debug_assert_eq!(self.particle_count(), self.state.masses.len());
-        debug_assert_eq!(self.particle_count(), self.state.positions.len());
-        debug_assert_eq!(self.particle_count(), self.state.velocities.len());
-    }
-
-    /// Groups massive particles before massless particles.
-    ///
-    /// Returns the first index occupied by a massless particle.
-    pub fn reorder_massive_first(&mut self) {
-        let particle_count = self.particle_count();
-
-        let massive_count = self
-            .state
-            .masses
-            .iter()
-            .filter(|&&mass| mass != 0.0)
-            .count();
-
-        // Maps sorted position to original position.
-        let mut sorted_to_old = (0..particle_count).collect::<Vec<_>>();
-
-        sorted_to_old.sort_by_key(|&old_index| self.state.masses[old_index] == 0.0);
-
-        let mut old_to_new = vec![0; particle_count];
-        for (new_index, old_index) in sorted_to_old.into_iter().enumerate() {
-            old_to_new[old_index] = new_index;
-        }
-
-        for index in 0..particle_count {
-            while old_to_new[index] != index {
-                let other = old_to_new[index];
-
-                self.catalog.id.swap(index, other);
-                self.catalog.name.swap(index, other);
-                self.catalog.radius.swap(index, other);
-
-                self.state.masses.swap(index, other);
-                self.state.positions.x.swap(index, other);
-                self.state.positions.y.swap(index, other);
-                self.state.positions.z.swap(index, other);
-                self.state.velocities.x.swap(index, other);
-                self.state.velocities.y.swap(index, other);
-                self.state.velocities.z.swap(index, other);
-
-                old_to_new.swap(index, other);
-            }
-        }
-
-        self.state.massive_count = massive_count;
+        self.state.particle_count
     }
 }
 
@@ -203,7 +147,9 @@ impl ParticleState {
     }
 }
 
-/// Initial metadata and state used to add one particle to a [`ParticleSystem`].
+/// Initial metadata and state used to add one particle to a
+/// [`ParticleSystemBuilder`].
+#[derive(Clone)]
 pub struct Particle {
     /// Name of the particle, also used as the output filename stem.
     pub name: String,
@@ -213,6 +159,90 @@ pub struct Particle {
     pub position: Vector3,
     /// Initial velocity `(u, v, w)`.
     pub velocity: Vector3,
-    /// Mass
+    /// Mass.
     pub mass: f64,
+}
+
+/// Builder for a [`ParticleSystem`].
+///
+/// Particles retain their insertion order within each mass category. When the
+/// builder is consumed, all massive particles are placed before all massless
+/// particles while retaining their stable catalog IDs.
+#[derive(Default, Clone)]
+pub struct ParticleSystemBuilder {
+    massive_particles: Vec<(usize, Particle)>,
+    massless_particles: Vec<(usize, Particle)>,
+    next_particle_id: usize,
+}
+
+impl ParticleSystemBuilder {
+    /// Adds a particle to the system being built.
+    pub fn add_particle(&mut self, particle: Particle) {
+        if particle.mass == 0.0 {
+            self.massless_particles
+                .push((self.next_particle_id, particle));
+        } else {
+            self.massive_particles
+                .push((self.next_particle_id, particle));
+        }
+
+        self.next_particle_id += 1;
+    }
+
+    /// Builds a [`ParticleSystem`] from the builder.
+    #[must_use]
+    pub fn build(self) -> ParticleSystem {
+        let ParticleSystemBuilder {
+            massive_particles,
+            massless_particles,
+            ..
+        } = self;
+        let massive_count = massive_particles.len();
+        let particle_count = massive_count + massless_particles.len();
+
+        let mut system = ParticleSystem::with_capacity(particle_count);
+        system.state.massive_count = massive_count;
+        system.state.particle_count = particle_count;
+
+        for (id, particle) in massive_particles.into_iter().chain(massless_particles) {
+            system.catalog.id.push(id);
+            system.catalog.name.push(particle.name);
+            system.catalog.radius.push(particle.radius);
+            system.state.masses.push(particle.mass);
+            system.state.positions.push(particle.position);
+            system.state.velocities.push(particle.velocity);
+        }
+
+        system
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn particle_with_mass(mass: f64) -> Particle {
+        Particle {
+            name: String::new(),
+            radius: 0.0,
+            position: Vector3::default(),
+            velocity: Vector3::default(),
+            mass,
+        }
+    }
+
+    #[test]
+    fn builder_places_massive_particles_first() {
+        let mut builder = ParticleSystem::builder();
+        builder.add_particle(particle_with_mass(0.0));
+        builder.add_particle(particle_with_mass(2.0));
+        builder.add_particle(particle_with_mass(0.0));
+        builder.add_particle(particle_with_mass(1.0));
+
+        let system = builder.build();
+
+        assert_eq!(system.particle_count(), 4);
+        assert_eq!(system.state().massive_count(), 2);
+        assert_eq!(system.state().masses(), &[2.0, 1.0, 0.0, 0.0]);
+    }
 }

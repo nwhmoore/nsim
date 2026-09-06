@@ -157,7 +157,7 @@ fn runge_kutta_convergence_and_time_reversibility() {
 
     let one_period = 2.0 * PI * (5.0_f64.powf(3.0) / (GRAVITY * 1.0)).sqrt();
 
-    let mut initial_system = ParticleSystem::new();
+    let mut initial_system = ParticleSystem::builder();
 
     initial_system.add_particle(Particle {
         name: String::from("Sol"),
@@ -203,7 +203,7 @@ fn runge_kutta_convergence_and_time_reversibility() {
     let mut errors = Vec::with_capacity(steps_per_periods.len());
 
     let sim_builder = Simulation::new()
-        .with_particle_system(initial_system)
+        .with_particle_builder(initial_system)
         .use_integrator(RungeKutta4::default())
         .add_force(NewtonianGravity)
         .set_diagnostic_interval(one_period);

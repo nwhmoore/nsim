@@ -11,43 +11,46 @@ use std::f64::consts::PI;
 /// energy for a two massive particle system in a highly eccentric orbit.
 #[test]
 fn two_body_conservation() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
+    let p1_pos = Vector3 {
+        x: -0.5,
+        y: 0.0,
+        z: 0.0,
+    };
+    let p1_vel = Vector3 {
+        x: 0.0,
+        y: -0.5,
+        z: 0.0,
+    };
     system.add_particle(Particle {
-        name: String::from("Sol"),
+        name: String::from("p1"),
         radius: 0.0,
-        position: Vector3 {
-            x: -0.5,
-            y: 0.0,
-            z: 0.0,
-        },
-        velocity: Vector3 {
-            x: 0.0,
-            y: -0.5,
-            z: 0.0,
-        },
+        position: p1_pos,
+        velocity: p1_vel,
         mass: 1.0,
     });
 
+    let p2_pos = Vector3 {
+        x: 0.5,
+        y: 0.0,
+        z: 0.0,
+    };
+    let p2_vel = Vector3 {
+        x: 0.0,
+        y: 0.5,
+        z: 0.0,
+    };
     system.add_particle(Particle {
-        name: String::from("Jupiter"),
+        name: String::from("p2"),
         radius: 0.0,
-        position: Vector3 {
-            x: 0.5,
-            y: 0.0,
-            z: 0.0,
-        },
-        velocity: Vector3 {
-            x: 0.0,
-            y: 0.5,
-            z: 0.0,
-        },
+        position: p2_pos,
+        velocity: p2_vel,
         mass: 1.0,
     });
 
-    let pos_vec = system.state().positions().vector_at(0) - system.state().positions().vector_at(1);
-    let vel_vec =
-        system.state().velocities().vector_at(0) - system.state().velocities().vector_at(1);
+    let pos_vec = p1_pos - p2_pos;
+    let vel_vec = p1_vel - p2_vel;
 
     let relative_speed = vel_vec.norm();
     let relative_position = pos_vec.norm();
@@ -64,7 +67,7 @@ fn two_body_conservation() {
     // ------------------------------------------------------------------------
 
     let mut simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
@@ -172,7 +175,7 @@ fn figure_eight_periodic_orbit() {
         },
     ];
 
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
     for i in 0..3 {
         system.add_particle(Particle {
             name: format!("Body{i}"),
@@ -184,7 +187,7 @@ fn figure_eight_periodic_orbit() {
     }
 
     let mut simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)

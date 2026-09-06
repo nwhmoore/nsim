@@ -5,14 +5,14 @@ use crate::{
     diagnostics::Diagnostics,
     force::{Force, ForceConfiguration, ForceSystem},
     integration::{Integrator, NoIntegrator},
-    particle::{Particle, ParticleSystem},
+    particle::{Particle, ParticleSystem, ParticleSystemBuilder},
     time::Time,
 };
 
 /// Builder for configuring a simulation.
 #[derive(Clone)]
 pub struct SimulationBuilder<I: Integrator> {
-    particles: ParticleSystem,
+    particles: ParticleSystemBuilder,
     time: Time,
     integrator: I,
     force_config: ForceConfiguration,
@@ -22,22 +22,21 @@ pub struct SimulationBuilder<I: Integrator> {
 impl<I: Integrator> SimulationBuilder<I> {
     /// Builds the simulation, evaluates its initial forces, and records its
     /// initial diagnostics.
-    pub fn build(mut self) -> Simulation<I> {
-        self.particles.reorder_massive_first();
-        let particle_count = self.particles.particle_count();
-
-        I::warn();
-        self.integrator.initialize(self.particles.state());
-
+    pub fn build(self) -> Simulation<I> {
+        let particles = self.particles.build();
+        let particle_count = particles.particle_count();
         let mut sim = Simulation {
-            particles: self.particles,
+            particles,
             time: self.time,
             integrator: self.integrator,
             forces: ForceSystem::new(self.force_config, particle_count),
             diagnostics: self.diagnostics,
         };
 
-        // pre-allocate the force buffer
+        I::warn();
+        sim.integrator.initialize(sim.particles.state());
+
+        // Evaluate the initial forces before recording the initial state.
         sim.forces.evaluate(sim.particles.state());
 
         // record initial state
@@ -50,36 +49,36 @@ impl<I: Integrator> SimulationBuilder<I> {
         sim
     }
 
-    /// Replaces the builder's particle system.
-    #[allow(clippy::return_self_not_must_use)]
-    pub fn with_particle_system(mut self, particle_system: ParticleSystem) -> Self {
-        self.particles = particle_system;
+    /// Replaces the builder's particle builder.
+    #[must_use]
+    pub fn with_particle_builder(mut self, particle_builder: ParticleSystemBuilder) -> Self {
+        self.particles = particle_builder;
         self
     }
 
     /// Adds a particle to the builder's particle system.
-    #[allow(clippy::return_self_not_must_use)]
+    #[must_use]
     pub fn add_particle(mut self, particle: Particle) -> Self {
         self.particles.add_particle(particle);
         self
     }
 
     /// Adds a force to the simulation.
-    #[allow(clippy::return_self_not_must_use)]
+    #[must_use]
     pub fn add_force<F: Force + 'static>(mut self, force: F) -> Self {
         self.force_config.add_force(force);
         self
     }
 
     /// Sets the interval between diagnostic records.
-    #[allow(clippy::return_self_not_must_use)]
+    #[must_use]
     pub fn set_diagnostic_interval(mut self, dt: f64) -> Self {
         self.time.set_diagnostic_interval(dt);
         self
     }
 
     /// Sets the simulation timestep.
-    #[allow(clippy::return_self_not_must_use)]
+    #[must_use]
     pub fn set_time_step(mut self, dt: f64) -> Self {
         self.time.step = dt;
         self
@@ -115,7 +114,7 @@ impl Simulation<NoIntegrator> {
     #[must_use]
     pub fn new() -> SimulationBuilder<NoIntegrator> {
         SimulationBuilder {
-            particles: ParticleSystem::default(),
+            particles: ParticleSystemBuilder::default(),
             time: Time::default(),
             integrator: NoIntegrator,
             force_config: ForceConfiguration::default(),

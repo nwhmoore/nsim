@@ -2,16 +2,16 @@ use nsim::{
     force::{GRAVITY, NewtonianGravity},
     integration::{Leapfrog, RungeKutta4},
     math_util::{OrbitalElements, Vector3},
-    particle::{Particle, ParticleSystem},
+    particle::{Particle, ParticleSystem, ParticleSystemBuilder},
     simulation::Simulation,
 };
 use rand::Rng;
 use std::f64::consts::PI;
 
-fn outer_solar_system_particles() -> ParticleSystem {
+fn outer_solar_system_particles() -> ParticleSystemBuilder {
     //nsim gravity
     debug_assert!((GRAVITY - 1.0).abs() < f64::EPSILON);
-    let mut particle_system = ParticleSystem::new();
+    let mut particle_system = ParticleSystem::builder();
     // given velocites are in AU/day so we convert
     let velocity_scale = 365.2425 / (2.0 * PI);
     let central_mass = 1.0;
@@ -127,7 +127,7 @@ fn outer_solar_system_particles() -> ParticleSystem {
 fn solar_system_leapfrog() -> Simulation<Leapfrog> {
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
     Simulation::new()
-        .with_particle_system(outer_solar_system_particles())
+        .with_particle_builder(outer_solar_system_particles())
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .set_time_step(dt)
@@ -137,7 +137,7 @@ fn solar_system_leapfrog() -> Simulation<Leapfrog> {
 fn solar_system_rk4() -> Simulation<RungeKutta4> {
     let dt = 0.593 * 2.0 * PI; // 5% of jup period
     Simulation::new()
-        .with_particle_system(outer_solar_system_particles())
+        .with_particle_builder(outer_solar_system_particles())
         .use_integrator(RungeKutta4::default())
         .add_force(NewtonianGravity)
         .set_time_step(dt)

@@ -8,7 +8,7 @@ use nsim::{
 
 #[test]
 fn massless_particle_receives_gravity_from_massive_particle() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
     system.add_particle(Particle {
         name: String::from("test1"),
@@ -30,7 +30,7 @@ fn massless_particle_receives_gravity_from_massive_particle() {
     });
 
     let simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .build();
@@ -45,7 +45,7 @@ fn massless_particle_receives_gravity_from_massive_particle() {
 
 #[test]
 fn massless_particle_does_not_accelerate_massive_particle() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
     system.add_particle(Particle {
         name: String::from("massive"),
@@ -67,7 +67,7 @@ fn massless_particle_does_not_accelerate_massive_particle() {
     });
 
     let simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .build();
@@ -82,7 +82,7 @@ fn massless_particle_does_not_accelerate_massive_particle() {
 
 #[test]
 fn massless_particles_do_not_gravitate_each_other() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
     system.add_particle(Particle {
         name: String::from("massive"),
@@ -115,7 +115,7 @@ fn massless_particles_do_not_gravitate_each_other() {
     });
 
     let simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .build();
@@ -138,7 +138,7 @@ fn massless_particles_do_not_gravitate_each_other() {
 
 #[test]
 fn massless_particles_do_not_contribute_to_gravitational_potential_energy() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
     system.add_particle(Particle {
         name: String::from("massive1"),
@@ -171,7 +171,7 @@ fn massless_particles_do_not_contribute_to_gravitational_potential_energy() {
     });
 
     let simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .build();
@@ -191,7 +191,7 @@ fn massless_particles_do_not_contribute_to_gravitational_potential_energy() {
 
 #[test]
 fn system_of_only_massless_particles_has_no_gravity() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
     system.add_particle(Particle {
         name: String::from("test1"),
@@ -227,7 +227,7 @@ fn system_of_only_massless_particles_has_no_gravity() {
     });
 
     let simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .build();

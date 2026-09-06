@@ -159,7 +159,7 @@ impl Vector3Series {
     }
 
     /// Appends one vector value to the end of the series.
-    pub fn push(&mut self, vector3: &Vector3) {
+    pub fn push(&mut self, vector3: Vector3) {
         self.x.push(vector3.x);
         self.y.push(vector3.y);
         self.z.push(vector3.z);

@@ -1,9 +1,11 @@
 //! Fixed-timestep leapfrog/velocity-Verlet integration.
 //!
-//! The integrator reuses the acceleration already stored in [`ForceBuffer`]
-//! for the current state. The caller must perform one initial force evaluation
-//! before the first timestep. Each completed timestep leaves the buffer ready
-//! for the next timestep.
+//! The integrator reuses the acceleration already stored in
+//! [`ForceBuffer`] for the current state. The caller must perform
+//! one initial force evaluation before the first timestep. Each completed
+//! timestep leaves the buffer ready for the next timestep.
+//!
+//! [`ForceBuffer`]: crate::force::ForceBuffer
 
 use crate::{force::ForceSystem, particle::ParticleState};
 

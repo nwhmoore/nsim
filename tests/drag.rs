@@ -114,7 +114,7 @@ fn linear_drag_causes_exponential_velocity_decay() {
 
 #[test]
 fn gravity_and_drag_inspiral_binary() {
-    let mut system = ParticleSystem::new();
+    let mut system = ParticleSystem::builder();
 
     let particle1_mass = 1.0;
     let particle2_mass = 1.0;
@@ -160,7 +160,7 @@ fn gravity_and_drag_inspiral_binary() {
     });
 
     let mut simulation = Simulation::new()
-        .with_particle_system(system)
+        .with_particle_builder(system)
         .use_integrator(Leapfrog)
         .add_force(NewtonianGravity)
         .add_force(ScalarDrag { damping_rate })
@@ -169,19 +169,6 @@ fn gravity_and_drag_inspiral_binary() {
         .build();
 
     simulation.run_steps((orbital_period / dt).round() as usize);
-
-    // particles move to smaller orbit, inner orbits have higher orbital velocity so KE actually goes up here.
-    // let initial_kinetic_energy = simulation.diagnostics().kinetic_energy()[0];
-    // let final_kinetic_energy = simulation.diagnostics().kinetic_energy()[1];
-
-    // println!("Initial kinetic energy: {initial_kinetic_energy}");
-    // println!("Final kinetic energy: {final_kinetic_energy}");
-    // println!();
-
-    // assert!(
-    //     final_kinetic_energy < initial_kinetic_energy,
-    //     "Drag should reduce kinetic energy"
-    // );
 
     let initial_angular_momentum = simulation
         .diagnostics()
