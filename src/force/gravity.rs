@@ -20,8 +20,6 @@ impl Force for NewtonianGravity {
         let masses = state.masses();
         let massive_count = state.massive_count();
         let particle_count = state.particle_count();
-        // let massive_indices = state.massive_indices();
-        // let massless_indices = state.massless_indices();
 
         for i in 0..massive_count {
             let pos_mass1_x = positions.x[i];
@@ -74,7 +72,6 @@ impl Force for NewtonianGravity {
     fn calculate_potential_energy(&self, state: &ParticleState) -> Option<f64> {
         let positions = state.positions();
         let masses = state.masses();
-        //let massive_indices = state.massive_indices();
         let massive_count = state.massive_count();
 
         let mut potential_energy = KahanAccumulator::default();

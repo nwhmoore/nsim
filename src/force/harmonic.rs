@@ -18,7 +18,6 @@ impl Force for HarmonicPotential {
     fn evaluate(&self, particle_state: &ParticleState, output: &mut ForceEvaluation<'_>) {
         let positions = particle_state.positions();
         let spring_constant = self.k;
-        // let massive_indices = particle_state.massive_indices();
         let mass = particle_state.masses();
         let massive_count = particle_state.massive_count();
 

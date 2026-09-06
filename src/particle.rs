@@ -90,7 +90,6 @@ impl ParticleSystem {
         // Maps sorted position to original position.
         let mut sorted_to_old = (0..particle_count).collect::<Vec<_>>();
 
-        // stable sort ordering
         sorted_to_old.sort_by_key(|&old_index| self.state.masses[old_index] == 0.0);
 
         let mut old_to_new = vec![0; particle_count];
@@ -102,7 +101,6 @@ impl ParticleSystem {
             while old_to_new[index] != index {
                 let other = old_to_new[index];
 
-                //self.swap_particles(index,other);
                 self.catalog.id.swap(index, other);
                 self.catalog.name.swap(index, other);
                 self.catalog.radius.swap(index, other);
