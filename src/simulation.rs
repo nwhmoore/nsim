@@ -23,6 +23,7 @@ impl<I: Integrator> SimulationBuilder<I> {
     /// Builds the simulation, evaluates its initial forces, and records its
     /// initial diagnostics.
     pub fn build(mut self) -> Simulation<I> {
+        self.particles.reorder_massive_first();
         let particle_count = self.particles.particle_count();
 
         I::warn();

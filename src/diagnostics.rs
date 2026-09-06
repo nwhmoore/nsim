@@ -34,9 +34,9 @@ impl Diagnostics {
         let positions = particle_state.positions();
         let velocities = particle_state.velocities();
         let masses = particle_state.masses();
-        let massive_indices = particle_state.massive_indices();
+        let massive_count = particle_state.massive_count();
 
-        for &idx in massive_indices {
+        for idx in 0..massive_count {
             let mass = masses[idx];
 
             let rx = positions.x[idx];

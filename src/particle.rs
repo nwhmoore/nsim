@@ -64,23 +64,62 @@ impl ParticleSystem {
 
         self.state.velocities.push(&particle.velocity);
 
-        if particle.mass == 0.0 {
-            self.state.massless_indices.push(self.next_particle_id);
-        } else {
-            self.state.massive_indices.push(self.next_particle_id);
-        }
+        self.next_particle_id += 1;
+        self.state.particle_count += 1;
 
         debug_assert_eq!(self.particle_count(), self.catalog.name.len());
         debug_assert_eq!(self.particle_count(), self.catalog.radius.len());
         debug_assert_eq!(self.particle_count(), self.state.masses.len());
         debug_assert_eq!(self.particle_count(), self.state.positions.len());
         debug_assert_eq!(self.particle_count(), self.state.velocities.len());
-        debug_assert_eq!(
-            self.particle_count(),
-            self.state.massive_indices.len() + self.state.massless_indices.len()
-        );
+    }
 
-        self.next_particle_id += 1;
+    /// Groups massive particles before massless particles.
+    ///
+    /// Returns the first index occupied by a massless particle.
+    pub fn reorder_massive_first(&mut self) {
+        let particle_count = self.particle_count();
+
+        let massive_count = self
+            .state
+            .masses
+            .iter()
+            .filter(|&&mass| mass != 0.0)
+            .count();
+
+        // Maps sorted position to original position.
+        let mut sorted_to_old = (0..particle_count).collect::<Vec<_>>();
+
+        // stable sort ordering
+        sorted_to_old.sort_by_key(|&old_index| self.state.masses[old_index] == 0.0);
+
+        let mut old_to_new = vec![0; particle_count];
+        for (new_index, old_index) in sorted_to_old.into_iter().enumerate() {
+            old_to_new[old_index] = new_index;
+        }
+
+        for index in 0..particle_count {
+            while old_to_new[index] != index {
+                let other = old_to_new[index];
+
+                //self.swap_particles(index,other);
+                self.catalog.id.swap(index, other);
+                self.catalog.name.swap(index, other);
+                self.catalog.radius.swap(index, other);
+
+                self.state.masses.swap(index, other);
+                self.state.positions.x.swap(index, other);
+                self.state.positions.y.swap(index, other);
+                self.state.positions.z.swap(index, other);
+                self.state.velocities.x.swap(index, other);
+                self.state.velocities.y.swap(index, other);
+                self.state.velocities.z.swap(index, other);
+
+                old_to_new.swap(index, other);
+            }
+        }
+
+        self.state.massive_count = massive_count;
     }
 }
 
@@ -106,17 +145,17 @@ pub struct ParticleState {
     positions: Vector3Series,
     /// Cartesian velocities.
     velocities: Vector3Series,
-    /// Indices of massive particles.
-    massive_indices: Vec<usize>,
-    /// Indices of massless test particles.
-    massless_indices: Vec<usize>,
+    /// Number of massive particles.
+    massive_count: usize,
+    /// Number of particles.
+    particle_count: usize,
 }
 
 impl ParticleState {
     /// Returns the number of particles currently represented in the state.
     #[must_use]
     pub fn particle_count(&self) -> usize {
-        self.masses.len()
+        self.particle_count
     }
 
     /// Returns the per-particle masses, including zero for massless test
@@ -159,16 +198,10 @@ impl ParticleState {
         (&mut self.positions, &mut self.velocities)
     }
 
-    /// Returns the indices of massive particles.
+    /// Returns the number of massive particles.
     #[must_use]
-    pub fn massive_indices(&self) -> &[usize] {
-        &self.massive_indices
-    }
-
-    /// Returns the indices of massless test particles.
-    #[must_use]
-    pub fn massless_indices(&self) -> &[usize] {
-        &self.massless_indices
+    pub fn massive_count(&self) -> usize {
+        self.massive_count
     }
 }
 
